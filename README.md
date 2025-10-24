@@ -17,7 +17,7 @@ Ao final, os participantes terão construído um **site funcional e responsivo**
 Aqui estão reunidos todos os registros e documentos produzidos durante o desenvolvimento do projeto, como **pautas de reuniões, relatórios de progresso e protótipos das telas**.
 
 **Links para os documentos:**
-- [Pauta das Reuniões](#) *(adicionar link do OneDrive ou Google Drive quando disponível)*
+- [Pauta das Reuniões](https://1drv.ms/w/c/6470DA6E3909AC4F/EZJOnSadhQVGgpO1JxTww4gBm7MxHU0e8tn_7alklqzD-A?e=6x0tqb)
 
 ---
 
