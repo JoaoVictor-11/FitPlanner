@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class='hero'>
+  <h2>Crie treinos personalizados de forma simples</h2>
+  <p>Cadastre-se e gere planos com base no seu nível e objetivos.</p>
+  <a class='btn' href='{{ url_for('register') }}'>Começar</a>
+  <a class='btn ghost' href='{{ url_for('login') }}'>Já sou cadastrado</a>
+</section>
+{% endblock %}

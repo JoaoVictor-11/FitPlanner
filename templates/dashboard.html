@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Dashboard</h2>
+<section class='card'>
+  <h3>Gerar plano automaticamente</h3>
+  <form method='post' action='{{ url_for('gerar_plano') }}'>
+    <label>Nível</label><select name='nivel'><option value='iniciante'>Iniciante</option><option value='intermediario'>Intermediário</option><option value='avancado'>Avançado</option></select>
+    <label>Objetivo</label><select name='objetivo'><option value='manter'>Manter</option><option value='hipertrofia'>Hipertrofia</option><option value='resistencia'>Resistência</option></select>
+    <label>Dias por semana</label><input name='dias_por_semana' type='number' min='1' max='6' value='3'>
+    <button class='btn' type='submit'>Gerar plano</button>
+  </form>
+</section>
+<section class='card'>
+  <h3>Adicionar treino manualmente</h3>
+  <form method='post'>
+    <input type='hidden' name='action' value='salvar_treino'>
+    <label>Dia (0=Segunda, 6=Domingo)</label><input name='dias_semana_id' type='number' min='0' max='6' value='0'>
+    <label>Grupo muscular</label><input name='grupo_muscular' required>
+    <label>Exercício</label><input name='exercicio' required>
+    <label>Séries</label><input name='series' type='number' min='1' value='3'>
+    <label>Repetições</label><input name='repeticoes' type='number' min='1' value='12'>
+    <button class='btn' type='submit'>Salvar treino</button>
+  </form>
+</section>
+<section class='card'>
+  <h3>Seus treinos</h3>
+  {% if treinos %}
+  <table class='table'><thead><tr><th>Dia</th><th>Grupo</th><th>Exercício</th><th>Séries</th><th>Repetições</th></tr></thead><tbody>{% for t in treinos %}<tr><td>{{t.dias_semana_id}}</td><td>{{t.grupo_muscular}}</td><td>{{t.exercicio}}</td><td>{{t.series}}</td><td>{{t.repeticoes}}</td></tr>{% endfor %}</tbody></table>
+  {% else %}<p>Nenhum treino registrado.</p>{% endif %}
+</section>
+{% endblock %}
