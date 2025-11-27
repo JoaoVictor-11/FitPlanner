@@ -1,31 +1,111 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% block content %}
+
 <h2>Dashboard</h2>
-<section class='card'>
+
+<!-- GERAR PLANO AUTOMÁTICO -->
+<section class="card">
   <h3>Gerar plano automaticamente</h3>
-  <form method='post' action='{{ url_for('gerar_plano') }}'>
-    <label>Nível</label><select name='nivel'><option value='iniciante'>Iniciante</option><option value='intermediario'>Intermediário</option><option value='avancado'>Avançado</option></select>
-    <label>Objetivo</label><select name='objetivo'><option value='manter'>Manter</option><option value='hipertrofia'>Hipertrofia</option><option value='resistencia'>Resistência</option></select>
-    <label>Dias por semana</label><input name='dias_por_semana' type='number' min='1' max='6' value='3'>
-    <button class='btn' type='submit'>Gerar plano</button>
+
+  <form method="post" action="{{ url_for('gerar_plano') }}">
+    
+    <label>Nível</label>
+    <select name="nivel">
+      <option value="iniciante">Iniciante</option>
+      <option value="intermediario">Intermediário</option>
+      <option value="avancado">Avançado</option>
+    </select>
+
+    <label>Objetivo</label>
+    <select name="objetivo">
+      <option value="manter">Manter</option>
+      <option value="hipertrofia">Hipertrofia</option>
+      <option value="resistencia">Resistência</option>
+    </select>
+
+    <label>Dias da semana</label>
+    <div class="dias-semana">
+      <input type="checkbox" id="seg" name="dias" value="Seg"><label for="seg">Seg</label>
+      <input type="checkbox" id="ter" name="dias" value="Ter"><label for="ter">Ter</label>
+      <input type="checkbox" id="qua" name="dias" value="Qua"><label for="qua">Qua</label>
+      <input type="checkbox" id="qui" name="dias" value="Qui"><label for="qui">Qui</label>
+      <input type="checkbox" id="sex" name="dias" value="Sex"><label for="sex">Sex</label>
+      <input type="checkbox" id="sab" name="dias" value="Sáb"><label for="sab">Sáb</label>
+      <input type="checkbox" id="dom" name="dias" value="Dom"><label for="dom">Dom</label>
+    </div>
+
+    <label>Peso (kg)</label>
+    <input type="number" name="peso" step="0.1">
+
+    <label>Altura (cm)</label>
+    <input type="number" name="altura" step="1">
+
+    <label>Idade</label>
+    <input type="number" name="idade">
+
+    <button class="btn" type="submit">Gerar plano</button>
   </form>
 </section>
-<section class='card'>
+
+<!-- ADICIONAR TREINO MANUALMENTE -->
+<section class="card">
   <h3>Adicionar treino manualmente</h3>
-  <form method='post'>
-    <input type='hidden' name='action' value='salvar_treino'>
-    <label>Dia (0=Segunda, 6=Domingo)</label><input name='dias_semana_id' type='number' min='0' max='6' value='0'>
-    <label>Grupo muscular</label><input name='grupo_muscular' required>
-    <label>Exercício</label><input name='exercicio' required>
-    <label>Séries</label><input name='series' type='number' min='1' value='3'>
-    <label>Repetições</label><input name='repeticoes' type='number' min='1' value='12'>
-    <button class='btn' type='submit'>Salvar treino</button>
+
+  <form method="post">
+    <input type="hidden" name="action" value="salvar_treino">
+
+    <label>Dia (0=Segunda, 6=Domingo)</label>
+    <input type="number" name="dias_semana_id" min="0" max="6" value="0">
+
+    <label>Grupo muscular</label>
+    <input type="text" name="grupo_muscular" required>
+
+    <label>Exercício</label>
+    <input type="text" name="exercicio" required>
+
+    <label>Séries</label>
+    <input type="number" name="series" min="1" value="3">
+
+    <label>Repetições</label>
+    <input type="number" name="repeticoes" min="1" value="12">
+
+    <button class="btn" type="submit">Salvar treino</button>
   </form>
 </section>
-<section class='card'>
+
+<!-- LISTAGEM DOS TREINOS -->
+<section class="card">
   <h3>Seus treinos</h3>
+
   {% if treinos %}
-  <table class='table'><thead><tr><th>Dia</th><th>Grupo</th><th>Exercício</th><th>Séries</th><th>Repetições</th></tr></thead><tbody>{% for t in treinos %}<tr><td>{{t.dias_semana_id}}</td><td>{{t.grupo_muscular}}</td><td>{{t.exercicio}}</td><td>{{t.series}}</td><td>{{t.repeticoes}}</td></tr>{% endfor %}</tbody></table>
-  {% else %}<p>Nenhum treino registrado.</p>{% endif %}
+    {% set dias_semana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'] %}
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Dia</th>
+          <th>Grupo</th>
+          <th>Exercício</th>
+          <th>Séries</th>
+          <th>Repetições</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in treinos %}
+          <tr>
+            <td>{{ dias_semana[t.dias_semana_id] }}</td>
+            <td>{{ t.grupo_muscular }}</td>
+            <td>{{ t.exercicio }}</td>
+            <td>{{ t.series }}</td>
+            <td>{{ t.repeticoes }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  {% else %}
+    <p>Nenhum treino registrado.</p>
+  {% endif %}
 </section>
+
 {% endblock %}

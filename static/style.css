@@ -1,1 +1,257 @@
-:root{--bg:#f7f7f9;--accent:#2b6cb0;--muted:#666}body{font-family:Inter,system-ui;-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;background:var(--bg);margin:0}.container{max-width:960px;margin:0 auto;padding:20px}.topbar{background:#fff;border-bottom:1px solid #eee}.topbar .container{display:flex;align-items:center;justify-content:space-between}.topbar h1{margin:10px 0;font-size:20px}.topbar nav a{margin-left:12px;text-decoration:none;color:var(--accent)}.hero{padding:40px;text-align:center;background:linear-gradient(90deg,#fff,#f4f8ff);border-radius:8px}.btn{display:inline-block;padding:8px 14px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;border:none;cursor:pointer}.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}.card{background:#fff;padding:16px;border-radius:8px;margin-top:16px}label{display:block;margin-top:8px;color:var(--muted)}input,select{width:100%;padding:8px;margin-top:4px;border-radius:6px;border:1px solid #ddd}.table{width:100%;border-collapse:collapse;margin-top:8px}.table th,.table td{padding:8px;border-bottom:1px solid #eee;text-align:left}.flashes{list-style:none;padding:0}.flash{padding:8px;margin:8px 0;border-radius:6px}.flash.success{background:#e6ffed;border:1px solid #b7f0c3}.flash.warning{background:#fff9e6;border:1px solid #ffe3a8}.flash.danger{background:#ffe6e6;border:1px solid #ffb3b3}.footer{padding:16px;text-align:center;color:#888;margin-top:24px}
+/* ======================= */
+/* ===== ESTILO GERAL ==== */
+/* ======================= */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f2f6fa;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+h1, h2, h3 {
+    color: #222;
+    margin: 0 0 8px 0;
+}
+
+/* ======================= */
+/* ===== CONTAINER ======= */
+/* ======================= */
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 18px;
+}
+
+/* ======================= */
+/* ===== CABEÇALHO ======= */
+/* ======================= */
+.topbar {
+    background: #007bb8;
+    color: #fff;
+    padding: 18px 0;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+}
+
+.topbar .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.topbar h1 a {
+    color: inherit;
+    text-decoration: none;
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.topbar nav a {
+    color: inherit;
+    text-decoration: none;
+    margin-left: 12px;
+    font-weight: 600;
+}
+
+.topbar nav a.highlight {
+    background: rgba(255,255,255,0.12);
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+/* ======================= */
+/* ===== CONTEÚDO ======== */
+/* ======================= */
+main.container {
+    padding: 25px 18px;
+    margin-top: 18px;
+}
+
+/* Cartões de conteúdo */
+.card {
+    background: #ffffff;
+    padding: 20px 22px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+}
+
+/* ======================= */
+/* ===== FORMULÁRIOS ===== */
+/* ======================= */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+    gap: 12px;
+    align-items: end;
+}
+
+.form-grid .full {
+    grid-column: 1 / -1;
+}
+
+label {
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 6px;
+    display: block;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+select {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #d0d8df;
+    background: #fafafa;
+    transition: border-color .18s, box-shadow .18s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #007bb8;
+    box-shadow: 0 0 6px rgba(0,123,184,0.18);
+    background: #fff;
+}
+
+/* ======================= */
+/* ===== BOTÕES ========== */
+/* ======================= */
+.btn {
+    padding: 12px 16px;
+    background: #007bb8;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: transform .08s ease, background .12s ease;
+}
+
+.btn:hover { transform: translateY(-1px); background: #006a9c; }
+
+.btn.ghost {
+    background: transparent;
+    color: #007bb8;
+    border: 2px solid #007bb8;
+}
+
+.btn.ghost:hover {
+    background: #007bb8;
+    color: #fff;
+}
+
+/* ======================= */
+/* ===== FLASHES ========= */
+/* ======================= */
+.flash-container { margin-bottom: 12px; }
+
+.flashes, .flash-container { list-style: none; padding: 0; margin: 0; }
+
+.flash {
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.flash.success { background: #e6f6ea; color: #18662a; }
+.flash.warning { background: #fff4e5; color: #6a4b00; }
+.flash.danger, .flash.error { background: #fdecea; color: #7a1f1f; }
+.flash.info { background: #e8f4ff; color: #0d4f6c; }
+
+/* ======================= */
+/* ===== TABELAS ========= */
+/* ======================= */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 0.95rem;
+}
+
+.table thead th {
+    background: #007bb8;
+    color: #fff;
+    padding: 10px;
+    text-align: left;
+}
+
+.table tbody td {
+    padding: 10px;
+    border-top: 1px solid #eef3f6;
+    background: #fff;
+}
+
+.table tbody tr:nth-child(even) td {
+    background: #f7fbff;
+}
+
+/* ======================= */
+/* ===== DIAS DA SEMANA === */
+/* ======================= */
+.dias-semana {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.dias-semana input[type="checkbox"] { display: none; }
+
+.dias-semana label {
+    background: #eaf2ff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    border: 1px solid #d7e6ff;
+    transition: background .12s, transform .08s;
+}
+
+.dias-semana label:hover { transform: translateY(-2px); }
+
+.dias-semana input[type="checkbox"]:checked + label {
+    background: #6ee06b;
+    color: #fff;
+    border-color: #53b943;
+}
+
+/* ======================= */
+/* ===== FOOTER ========== */
+/* ======================= */
+.footer {
+    text-align: center;
+    padding: 12px;
+    margin-top: 28px;
+    background: #e8eef3;
+    color: #666;
+    font-size: 0.95rem;
+    border-top: 1px solid #dde6ea;
+}
+
+/* ======================= */
+/* ===== RESPONSIVO ====== */
+/* ======================= */
+@media (max-width: 720px) {
+    .topbar .container { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .table thead { display: none; }
+    .table tbody td { display: block; width: 100%; box-sizing: border-box; }
+    .table tbody tr { margin-bottom: 12px; display: block; border: 1px solid #eef3f6; border-radius: 8px; overflow: hidden; }
+    .table tbody td { padding: 10px 12px; }
+}
