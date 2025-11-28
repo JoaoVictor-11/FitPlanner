@@ -1,16 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Entrar</h2>
-
-<form method="post">
-  <label>Email</label>
-  <input type="email" name="email" required>
-
-  <label>Senha</label>
-  <input type="password" name="senha" required>
-
-  <button class="btn" type="submit">Entrar</button>
-</form>
+<div class="form-box">
+  <h2>Entrar</h2>
+  <form method="post">
+    <label>Email</label>
+    <input type="email" name="email" required>
+    <label>Senha</label>
+    <input type="password" name="senha" required>
+    <button class="btn" type="submit">Entrar</button>
+  </form>
+</div>
 
 {% endblock %}

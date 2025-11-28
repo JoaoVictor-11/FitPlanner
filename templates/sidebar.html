@@ -1,0 +1,19 @@
+<nav class="sidebar" id="sidebar">
+    <ul>
+        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+        <li><a class="ativo" href="{{ url_for('perfil') }}">Perfil</a></li>
+        <li><a href="#" id="openConfig">Configurações</a></li>
+        <li><a href="{{ url_for('logout') }}">Sair</a></li>
+    </ul>
+</nav>
+
+<script>
+    const sidebar = document.getElementById("sidebar");
+    const menuBtn = document.getElementById("menuBtn");
+
+    if (menuBtn) {
+        menuBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("open");
+        });
+    }
+</script>

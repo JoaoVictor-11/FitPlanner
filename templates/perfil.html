@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="form-box">
+  <h2>Meu Perfil</h2>
+
+  <form method="POST" enctype="multipart/form-data">
+    <div style="text-align:center;">
+      {% if current_user.foto %}
+        <img src="{{ url_for('uploaded_file', filename=current_user.foto) }}" class="profile-pic" alt="Foto">
+      {% else %}
+        <img src="{{ url_for('static', filename='img/user-placeholder.png') }}" class="profile-pic" alt="Foto padrão">
+      {% endif %}
+    </div>
+
+    <label>Nome</label>
+    <input type="text" name="nome" value="{{ current_user.nome }}" required>
+
+    <label>Email</label>
+    <input type="email" name="email" value="{{ current_user.email }}" required>
+
+    <label>Senha (deixe em branco para não alterar)</label>
+    <input type="password" name="senha" placeholder="Nova senha">
+
+    <label>Foto de perfil</label>
+    <input type="file" name="foto" accept="image/*">
+
+    <button type="submit">Salvar alterações</button>
+  </form>
+</div>
+
+{% endblock %}

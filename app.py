@@ -1,26 +1,40 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 import os
+import random
 
+# -------------------------
+# Config
+# -------------------------
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'segredo_super_secreto'
+app.config['SECRET_KEY'] = os.environ.get('FITPLANNER_SECRET', 'troque_esta_chave_para_producao')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fitplanner.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Uploads
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
 db = SQLAlchemy(app)
-login = LoginManager(app)
-login.login_view = "login"
+login_manager = LoginManager(app)
+login_manager.login_view = "login"
 
-# ============================
-# MODELOS DO BANCO
-# ============================
 
+# -------------------------
+# Models
+# -------------------------
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100))
-    email = db.Column(db.String(120), unique=True)
-    senha = db.Column(db.String(120))
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    senha = db.Column(db.String(200), nullable=False)
+    foto = db.Column(db.String(200), default=None)        # nome do arquivo salvo
+    theme = db.Column(db.String(20), default="light")     # 'light' ou 'dark'
 
 class Treino(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -31,37 +45,76 @@ class Treino(db.Model):
     series = db.Column(db.Integer)
     repeticoes = db.Column(db.Integer)
 
-@login.user_loader
+
+@login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# ============================
-# ROTAS
-# ============================
+
+# -------------------------
+# Helpers
+# -------------------------
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+# -------------------------
+# Routes
+# -------------------------
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
-# ---------- LOGIN ----------
+
+# ----- Register -----
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        nome = request.form.get("nome", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        senha = request.form.get("senha", "")
+
+        if not nome or not email or not senha:
+            flash("Preencha todos os campos.", "error")
+            return redirect(url_for("register"))
+
+        if User.query.filter_by(email=email).first():
+            flash("Este email já está cadastrado!", "error")
+            return redirect(url_for("register"))
+
+        novo = User(
+            nome=nome,
+            email=email,
+            senha=generate_password_hash(senha)
+        )
+        db.session.add(novo)
+        db.session.commit()
+
+        flash("Conta criada com sucesso! Faça login.", "success")
+        return redirect(url_for("login"))
+
+    return render_template("register.html")
+
+
+# ----- Login -----
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form["email"]
-        senha = request.form["senha"]
+        email = request.form.get("email", "").strip().lower()
+        senha = request.form.get("senha", "")
 
         user = User.query.filter_by(email=email).first()
-
-        if user and user.senha == senha:
-            login_user(user)
+        if user and check_password_hash(user.senha, senha):
+            login_user(user, remember=True)
             flash("Login realizado com sucesso!", "success")
             return redirect(url_for("dashboard"))
-        else:
-            flash("Email ou senha incorretos!", "error")
+        flash("Email ou senha incorretos!", "error")
 
     return render_template("login.html")
 
-# ---------- LOGOUT ----------
+
+# ----- Logout -----
 @app.route("/logout")
 @login_required
 def logout():
@@ -69,124 +122,305 @@ def logout():
     flash("Você saiu da conta.", "info")
     return redirect(url_for("index"))
 
-# ---------- REGISTRO ----------
-@app.route("/register", methods=["GET", "POST"])
-def register():
+
+# ----- Perfil (editar) -----
+@app.route('/perfil', methods=['GET', 'POST'])
+@login_required
+def perfil():
     if request.method == "POST":
-        nome = request.form["nome"]
-        email = request.form["email"]
-        senha = request.form["senha"]
+        nome = request.form.get('nome', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        senha = request.form.get('senha', '')
 
-        user = User.query.filter_by(email=email).first()
-        if user:
-            flash("Este email já está cadastrado!", "error")
-            return redirect(url_for("register"))
+        if nome:
+            current_user.nome = nome
+        if email:
+            # checar se email já é usado por outro
+            other = User.query.filter(User.email == email, User.id != current_user.id).first()
+            if other:
+                flash("Email já está em uso por outra conta.", "error")
+                return redirect(url_for('perfil'))
+            current_user.email = email
 
-        novo = User(nome=nome, email=email, senha=senha)
-        db.session.add(novo)
+        if senha and senha.strip() != "":
+            current_user.senha = generate_password_hash(senha)
+
+        # upload foto
+        if 'foto' in request.files:
+            foto = request.files['foto']
+            if foto and foto.filename != '' and allowed_file(foto.filename):
+                filename = secure_filename(f"{current_user.id}_{random.randint(1000,9999)}_{foto.filename}")
+                filepath = os.path.join(UPLOAD_FOLDER, filename)
+                foto.save(filepath)
+                current_user.foto = filename
+
         db.session.commit()
+        flash("Perfil atualizado com sucesso!", "success")
+        return redirect(url_for('perfil'))
 
-        flash("Conta criada com sucesso!", "success")
-        return redirect(url_for("login"))
+    return render_template("perfil.html")
 
-    return render_template("register.html")
 
-# ---------- DASHBOARD ----------
+# ----- Serve uploads (opcional, static already serves it but this is explicit) -----
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
+
+# ----- Dashboard -----
 @app.route("/dashboard", methods=["GET", "POST"])
 @login_required
 def dashboard():
-
-    # Salvando treino manualmente
+    # salvar treino manual
     if request.method == "POST":
         if request.form.get("action") == "salvar_treino":
-
-            t = Treino(
-                user_id=current_user.id,
-                dias_semana_id=int(request.form["dias_semana_id"]),
-                grupo_muscular=request.form["grupo_muscular"],
-                exercicio=request.form["exercicio"],
-                series=int(request.form["series"]),
-                repeticoes=int(request.form["repeticoes"])
-            )
-            db.session.add(t)
-            db.session.commit()
-
-            flash("Treino salvo!", "success")
+            try:
+                t = Treino(
+                    user_id=current_user.id,
+                    dias_semana_id=int(request.form["dias_semana_id"]),
+                    grupo_muscular=request.form["grupo_muscular"],
+                    exercicio=request.form["exercicio"],
+                    series=int(request.form["series"]),
+                    repeticoes=int(request.form["repeticoes"])
+                )
+                db.session.add(t)
+                db.session.commit()
+                flash("Treino salvo!", "success")
+            except Exception as e:
+                db.session.rollback()
+                flash("Erro ao salvar treino.", "error")
             return redirect(url_for("dashboard"))
 
-    treinos = Treino.query.filter_by(user_id=current_user.id).all()
-
+    treinos = Treino.query.filter_by(user_id=current_user.id).order_by(Treino.dias_semana_id).all()
     return render_template("dashboard.html", treinos=treinos)
 
-# ---------- GERADOR DE TREINO AUTOMÁTICO ----------
+
+# ----- Configurações (mostra tema atual salvo no usuário) -----
+@app.route("/configuracoes")
+@login_required
+def configuracoes():
+    return render_template("config.html")
+
+
+# ----- Trocar tema (atualiza preferência do usuário) -----
+@app.route("/trocar_tema", methods=["POST"])
+@login_required
+def trocar_tema():
+    novo = "dark" if current_user.theme != "dark" else "light"
+    current_user.theme = novo
+    db.session.commit()
+    return {"status": "ok", "theme": novo}
+
+
+# ----- Gerador de planos (seu código original, colado e adaptado) -----
 @app.route("/gerar_plano", methods=["POST"])
 @login_required
 def gerar_plano():
-
-    nivel = request.form["nivel"]
-    objetivo = request.form["objetivo"]
+    # (mantive seu gerador original, com pequenas proteções)
+    nivel = request.form.get("nivel", "iniciante")
+    objetivo = request.form.get("objetivo", "hipertrofia")
+    divisao = request.form.get("divisao", "livre")
     dias = request.form.getlist("dias")
-    peso = request.form["peso"]
-    altura = request.form["altura"]
-    idade = request.form["idade"]
+    try:
+        peso = float(request.form.get("peso") or 0)
+    except:
+        peso = 0.0
+    try:
+        altura = float(request.form.get("altura") or 0)
+    except:
+        altura = 0.0
+    try:
+        idade = int(request.form.get("idade") or 0)
+    except:
+        idade = 0
 
     if not dias:
         flash("Selecione pelo menos um dia!", "error")
         return redirect(url_for("dashboard"))
 
-    # Dados simples de exemplo — depois posso melhorar com tabelas e IA
-    plano_base = {
-        "Peito": ["Supino reto", "Supino inclinado", "Crucifixo"],
-        "Costas": ["Puxada alta", "Remada baixa", "Barra fixa"],
-        "Pernas": ["Agachamento", "Leg press", "Cadeira extensora"],
-        "Ombro": ["Desenvolvimento", "Elevação lateral"],
-        "Bíceps": ["Rosca direta", "Rosca alternada"],
-        "Tríceps": ["Tríceps corda", "Paralelas"]
+    imc = None
+    if altura > 0:
+        try:
+            imc = peso / (altura ** 2)
+        except:
+            imc = None
+
+    EXS = [
+        ("Supino reto", "Peito", ["Ombro","Tríceps"], "barra/halteres", 3),
+        ("Supino inclinado", "Peito", ["Ombro","Tríceps"], "barra/halteres", 3),
+        ("Crucifixo", "Peito", [], "halteres", 2),
+        ("Flexão de braço", "Peito", ["Tríceps"], "peso_corpo", 1),
+
+        ("Puxada alta", "Costas", ["Bíceps"], "máquina", 2),
+        ("Remada curvada", "Costas", ["Bíceps"], "barra/halteres", 3),
+        ("Remada baixa", "Costas", ["Bíceps"], "máquina", 2),
+        ("Barra fixa", "Costas", ["Bíceps"], "peso_corpo", 3),
+
+        ("Agachamento livre", "Pernas", ["Glúteo"], "barra", 3),
+        ("Leg press", "Pernas", ["Glúteo"], "máquina", 2),
+        ("Cadeira extensora", "Pernas", [], "máquina", 1),
+        ("Cadeira flexora", "Pernas", [], "máquina", 1),
+        ("Panturilha em pé", "Pernas", [], "máquina", 1),
+
+        ("Desenvolvimento", "Ombro", ["Tríceps"], "barra/halteres", 3),
+        ("Elevação lateral", "Ombro", [], "halteres", 1),
+        ("Elevação frontal", "Ombro", [], "halteres", 1),
+
+        ("Rosca direta", "Bíceps", [], "barra", 2),
+        ("Rosca alternada", "Bíceps", [], "halteres", 1),
+
+        ("Tríceps corda", "Tríceps", [], "polia", 1),
+        ("Paralelas", "Tríceps", [], "peso_corpo", 3),
+
+        ("Prancha", "Core", [], "peso_corpo", 1),
+        ("Elevação de pernas", "Core", [], "peso_corpo", 1),
+    ]
+
+    grupos = {}
+    for nome, prim, secs, equip, dif in EXS:
+        grupos.setdefault(prim, []).append({
+            "nome": nome,
+            "sec": secs,
+            "equip": equip,
+            "dif": dif
+        })
+
+    if objetivo == "emagrecimento":
+        series_base = 3
+        reps_base = 15
+    elif objetivo == "forca":
+        series_base = 5
+        reps_base = 5
+    else:
+        series_base = 4
+        reps_base = 10
+
+    mult_nivel = {"iniciante": 0.7, "intermediario": 1.0, "avancado": 1.25}.get(nivel, 1.0)
+
+    if imc and imc > 30:
+        for g in list(grupos.keys()):
+            grupos[g] = [e for e in grupos[g] if e["dif"] <= 2]
+    if idade and idade > 50:
+        mult_nivel *= 0.9
+        reps_base += 2
+
+    DIVISAO_MAP = {
+        "livre": None,
+        "abc": [
+            ["Peito","Tríceps"],
+            ["Costas","Bíceps"],
+            ["Pernas","Ombro"]
+        ],
+        "abcd": [
+            ["Peito"],
+            ["Costas"],
+            ["Pernas"],
+            ["Ombro","Braços"]
+        ],
+        "abcde": [
+            ["Peito"],
+            ["Costas"],
+            ["Pernas"],
+            ["Ombro"],
+            ["Braços"]
+        ],
+        "ppl": [
+            ["Peito","Ombro","Tríceps"],
+            ["Costas","Bíceps"],
+            ["Pernas","Core"]
+        ]
     }
 
-    # Limpando plano anterior
+    def expand_groups(glist):
+        out = []
+        for g in glist:
+            if g == "Braços":
+                out += ["Bíceps", "Tríceps"]
+            else:
+                out.append(g)
+        return out
+
+    dias_lista = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"]
+    mapa_dias = [dias_lista.index(d) for d in dias]
+
+    grupos_disponiveis = [g for g in ["Peito","Costas","Pernas","Ombro","Bíceps","Tríceps","Core"] if g in grupos]
+    used_exercises = set()
+
     Treino.query.filter_by(user_id=current_user.id).delete()
+    total_inseridos = 0
 
-    # Distribuição
-    dias_lista = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
-    mapa = [dias_lista.index(d) for d in dias]
+    def selecionar_exercicios(lista, n, prefer_dif_max=3):
+        candidatos = [e for e in lista if e["nome"] not in used_exercises and e["dif"] <= prefer_dif_max]
+        if len(candidatos) < n:
+            candidatos = [e for e in lista if e["nome"] not in used_exercises]
+        if len(candidatos) < n:
+            candidatos = lista[:]
+        selecionados = random.sample(candidatos, k=min(n, len(candidatos)))
+        return selecionados
 
-    grupos = list(plano_base.keys())
-    idx = 0
+    num_dias = len(mapa_dias)
+    if num_dias <= 2:
+        ex_por_dia_base = 6
+    elif num_dias == 3:
+        ex_por_dia_base = 5
+    elif num_dias == 4:
+        ex_por_dia_base = 4
+    else:
+        ex_por_dia_base = 3
 
-    for dia in mapa:
-        grupo = grupos[idx % len(grupos)]
-        exercicios = plano_base[grupo]
+    def processar_dia(dia_id, grupos_para_dia):
+        nonlocal total_inseridos
+        grupos_para_dia = expand_groups(grupos_para_dia)
+        per_group = max(1, ex_por_dia_base // max(1, len(grupos_para_dia)))
+        extras = ex_por_dia_base - per_group * len(grupos_para_dia)
+        for gi, g in enumerate(grupos_para_dia):
+            cnt = per_group + (1 if gi < extras else 0)
+            lista = grupos.get(g, [])
+            if not lista:
+                continue
+            selecionados = selecionar_exercicios(lista, cnt, prefer_dif_max=3 if nivel=="avancado" else (2 if nivel=="intermediario" else 1))
+            for ex in selecionados:
+                series = max(1, int(series_base * mult_nivel))
+                reps = max(4, int(reps_base * mult_nivel))
+                novo = Treino(
+                    user_id=current_user.id,
+                    dias_semana_id=dia_id,
+                    grupo_muscular=g,
+                    exercicio=ex["nome"],
+                    series=series,
+                    repeticoes=reps
+                )
+                db.session.add(novo)
+                used_exercises.add(ex["nome"])
+                total_inseridos += 1
 
-        for ex in exercicios:
-            novo = Treino(
-                user_id=current_user.id,
-                dias_semana_id=dia,
-                grupo_muscular=grupo,
-                exercicio=ex,
-                series=3,
-                repeticoes=12
-            )
-            db.session.add(novo)
-
-        idx += 1
+    if divisao == "livre" or DIVISAO_MAP.get(divisao) is None:
+        for i, dia in enumerate(mapa_dias):
+            grupo = grupos_disponiveis[i % len(grupos_disponiveis)]
+            processar_dia(dia, [grupo])
+    else:
+        pattern = DIVISAO_MAP.get(divisao, DIVISAO_MAP["livre"])
+        for idx_d, dia in enumerate(mapa_dias):
+            padrao_dia = pattern[idx_d % len(pattern)]
+            processar_dia(dia, padrao_dia)
 
     db.session.commit()
-
-    flash("Plano gerado com sucesso!", "success")
+    flash(f"Plano inteligente ({divisao.upper()}) gerado com sucesso! {total_inseridos} exercícios adicionados.", "success")
     return redirect(url_for("dashboard"))
 
-# ============================
-# INICIALIZAR BANCO
-# ============================
-if not os.path.exists("instance"):
-    os.makedirs("instance")
 
+# -------------------------
+# Init DB
+# -------------------------
 with app.app_context():
     db.create_all()
+    # Se você está alterando o modelo (adicionou 'foto' ou 'theme') e já tem um fitplanner.db antigo,
+    # remova o arquivo 'fitplanner.db' antes de rodar para recriar com as novas colunas:
+    # os.remove('fitplanner.db')  # <-- só use se souber o que está fazendo
 
-# ============================
-# EXECUTAR APP
-# ============================
+
+# -------------------------
+# Run
+# -------------------------
 if __name__ == "__main__":
     app.run(debug=True)

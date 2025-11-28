@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="card">
+  <h3>Configurações</h3>
+
+  <p>Tema atual: <strong>{{ current_user.theme }}</strong></p>
+
+  <button id="btnToggleTheme" class="btn">Alternar tema</button>
+  <hr style="margin:18px 0;">
+  <a class="btn sair" href="{{ url_for('logout') }}">Sair da conta</a>
+</section>
+
+<script>
+document.getElementById('btnToggleTheme').addEventListener('click', async () => {
+  try {
+    const res = await fetch("{{ url_for('trocar_tema') }}", { method: 'POST', credentials: 'same-origin' });
+    const data = await res.json();
+    document.documentElement.setAttribute('data-theme', data.theme === 'dark' ? 'dark' : 'light');
+    // recarrega para aplicar classes do servidor (se quiser)
+    location.reload();
+  } catch (e) {
+    alert('Erro ao alternar tema.');
+  }
+});
+</script>
+
+{% endblock %}
