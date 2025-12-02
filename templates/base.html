@@ -6,7 +6,7 @@
   <title>FitPlanner</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body class="{% if request.endpoint == 'index' %}index-page{% endif %}">
@@ -25,8 +25,6 @@
           <a class="sidebar-link" href="{{ url_for('dashboard') }}">🏠 <span class="label">Dashboard</span></a>
           <a class="sidebar-link" href="{{ url_for('perfil') }}">👤 <span class="label">Perfil</span></a>
           <a class="sidebar-link" href="{{ url_for('configuracoes') }}">⚙ <span class="label">Configurações</span></a>
-          <button class="sidebar-link theme-toggle" id="sidebarThemeBtn">🌗 <span class="label">Tema</span></button>
-          <a class="sidebar-link sair" href="{{ url_for('logout') }}">🚪 <span class="label">Sair</span></a>
       </nav>
 
       <div class="sidebar-footer">

@@ -1,0 +1,55 @@
+/* ===== VARIÁVEIS ===== */
+:root {
+    --bg: #f4f6f8;
+    --bg-card: #ffffff;
+    --text: #1b1b1b;
+    --text-light: #555;
+    --primary: #0095d9;
+    --primary-dark: #007bb8;
+    --border: #d4d8dd;
+    --shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+:root[data-theme="dark"] {
+    --bg: #0f1115;
+    --bg-card: #1a1d22;
+    --text: #e6e6e6;
+    --text-light: #a4a4a4;
+    --primary: #4db8ff;
+    --primary-dark: #2896dd;
+    --border: #2a2e35;
+    --shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+/* ===== GLOBAL ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Inter", sans-serif;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    transition: background .3s, color .3s;
+    display: flex;
+    margin: 0;
+    padding: 0;
+}
+
+/* animação fade */
+.fade { animation: fadeIn .35s ease-out; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+img { max-width:100%; display:block; }
+table { width:100%; }
+
+body::after {
+    content: "";
+    display: block;
+    height: 40px;
+}

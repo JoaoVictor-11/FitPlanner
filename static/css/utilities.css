@@ -1,0 +1,3 @@
+.kv { display:flex; justify-content:space-between; }
+.small { font-size:0.9rem; color:var(--text-light); }
+.debug-border { outline:1px dashed rgba(255,255,255,0.04); }

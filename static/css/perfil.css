@@ -1,0 +1,18 @@
+.container-perfil {
+    max-width: 680px;
+    margin: auto;
+    padding: 18px;
+}
+
+.form-perfil {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 18px;
+}
+
+.foto-perfil {
+    width:150px;
+    height:150px;
+    border-radius:50%;
+    border:3px solid var(--primary);
+}

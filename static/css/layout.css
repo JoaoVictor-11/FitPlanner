@@ -1,0 +1,118 @@
+/* ===== SIDEBAR ===== */
+.sidebar {
+    width: 240px;
+    height: 100vh;
+    background: #111418;
+    border-right: 1px solid var(--border);
+    padding: 25px 18px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    box-shadow: var(--shadow);
+    color: white;
+}
+
+.sidebar .logo {
+    font-size: 26px;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 10px;
+    pointer-events: none;
+}
+
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sidebar-link {
+    color: #cfd6dd;
+    text-decoration: none;
+    padding: 12px 14px;
+    background: #1a1f25;
+    border-radius: 10px;
+    transition: .2s;
+}
+.sidebar-link:hover {
+    background: #242b33;
+    color: white;
+}
+.sidebar-link.active {
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+}
+
+/* ===== TOPBAR ===== */
+.topbar {
+    background: var(--bg-card);
+    padding: 18px 0;
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    margin-left: 240px;
+}
+
+.topbar .container {
+    max-width: 1080px;
+    margin: auto;
+    padding: 0 22px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.topbar h1 {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+/* ícone config */
+.config-icon {
+    position: absolute;
+    right: 22px;
+    font-size: 1.6rem;
+    cursor: pointer;
+}
+
+/* ===== MENU CONFIG ===== */
+.config-menu {
+    position: absolute;
+    right: 22px;
+    top: 75px;
+    width: 220px;
+    display: none;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    z-index: 30;
+}
+
+/* ===== CONTEÚDO PRINCIPAL ===== */
+.conteudo {
+    margin-left: 260px;
+    padding: 35px;
+    width: 100%;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 900px) {
+    .conteudo { margin-left: 80px; padding: 20px; }
+    .sidebar { width: 80px; }
+    .topbar { margin-left: 80px; }
+}
+
+@media (max-width: 720px) {
+    .sidebar {
+        transform: translateX(-340px);
+        transition: transform .22s ease;
+    }
+    .sidebar.open { transform: translateX(0); }
+    .conteudo, .topbar { margin-left: 0; }
+}

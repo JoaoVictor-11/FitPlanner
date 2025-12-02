@@ -1,0 +1,75 @@
+/* ===== CARDS ===== */
+.card {
+    background: var(--bg-card);
+    padding: 22px 24px;
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+}
+
+/* ===== FORM ===== */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+label { font-weight: 600; color: var(--text-light); }
+
+input, select {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+}
+
+/* ===== BOTÕES ===== */
+.btn {
+    padding: 12px;
+    background: var(--primary);
+    border-radius: 10px;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    transition: .2s;
+}
+.btn:hover { background: var(--primary-dark); }
+
+/* ===== FLASH ===== */
+.flash {
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+}
+.flash.success { background: linear-gradient(90deg,#12a454,#0b8f3a); color: #eaffef; }
+.flash.warning { background: linear-gradient(90deg,#ffb94d,#ff9a2c); color: #2a1700; }
+.flash.danger { background: linear-gradient(90deg,#ff6b6b,#ff4b4b); color: #fff; }
+
+/* ===== PILLS DIAS ===== */
+.dias-semana { display: flex; gap: 8px; flex-wrap: wrap; }
+.dias-semana input[type=checkbox] { display:none; }
+.dias-semana label {
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    cursor:pointer;
+}
+.dias-semana input:checked + label {
+    background: var(--primary);
+    color:white;
+}
+
+/* ===== TABELAS ===== */
+.table { border-collapse: collapse; margin-top: 12px; }
+.table th {
+    background: var(--primary);
+    color:white;
+    padding: 12px;
+}
+.table td {
+    padding: 12px;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+}
