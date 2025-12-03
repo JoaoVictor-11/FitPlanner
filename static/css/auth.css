@@ -1,0 +1,49 @@
+/* auth.css — estilos exclusivos de login e registro */
+
+/* Centralizar tudo */
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 70px);
+  padding: 20px;
+}
+
+/* Caixa do formulário */
+.auth-box {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 28px;
+  border-radius: 14px;
+  box-shadow: var(--shadow-soft);
+  animation: fadeIn .3s ease-out;
+}
+
+/* Título */
+.auth-box h2 {
+  text-align: center;
+  margin-bottom: 18px;
+  font-size: 1.5rem;
+  color: var(--text);
+}
+
+/* Inputs */
+.auth-box input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  color: var(--text);
+}
+
+/* Botão */
+.auth-box .btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  border-radius: 10px;
+}

@@ -38,8 +38,11 @@
         <h1 class="app-title">FitPlanner</h1>
       </div>
       <div class="topbar-right">
-        <button id="themeToggle" class="btn small" title="Alternar tema">🌗</button>
-        {% if current_user.is_authenticated %}
+        {% if request.endpoint not in ['index', 'login', 'register'] %}
+          <button id="themeToggle" class="btn small" title="Alternar tema">🌗</button>
+        {% endif %}
+
+        {% if current_user.is_authenticated and request.endpoint not in ['index', 'login', 'register'] %}
           <a class="btn small ghost" href="{{ url_for('logout') }}">Sair</a>
         {% endif %}
       </div>

@@ -86,3 +86,14 @@
   .sidebar.open{ transform: translateX(0); }
   .topbar, .main-content{ margin-left: 0 !important; padding-left:16px; padding-right:16px; }
 }
+
+/* ===== FIX: Páginas sem sidebar (index, login, register) ===== */
+.topbar.no-sidebar {
+  margin-left: 0 !important;
+}
+
+.main-content.no-sidebar {
+  margin-left: 0 !important;
+  padding-left: 22px !important;
+  padding-right: 22px !important;
+}
