@@ -1,11 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, jsonify, get_flashed_messages
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from flask import get_flashed_messages
-import os
-import random
+import os, random
 
 # -------------------------
 # Config
@@ -34,8 +32,8 @@ class User(db.Model, UserMixin):
     nome = db.Column(db.String(100))
     email = db.Column(db.String(120), unique=True, nullable=False)
     senha = db.Column(db.String(200), nullable=False)
-    foto = db.Column(db.String(200), default=None)        # nome do arquivo salvo
-    theme = db.Column(db.String(20), default="light")     # 'light' ou 'dark'
+    foto = db.Column(db.String(200), default=None)
+    theme = db.Column(db.String(20), default="dark")  # default dark
 
 class Treino(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -59,194 +57,13 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-# -------------------------
-# Routes
-# -------------------------
-
-@app.route("/")
-def index():
-    get_flashed_messages()  # limpa mensagens antigas
-    return render_template("index.html")
-
-
-# ----- Register -----
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        nome = request.form.get("nome", "").strip()
-        email = request.form.get("email", "").strip().lower()
-        senha = request.form.get("senha", "")
-
-        if not nome or not email or not senha:
-            flash("Preencha todos os campos.", "error")
-            return redirect(url_for("register"))
-
-        if User.query.filter_by(email=email).first():
-            flash("Este email já está cadastrado!", "error")
-            return redirect(url_for("register"))
-
-        novo = User(
-            nome=nome,
-            email=email,
-            senha=generate_password_hash(senha)
-        )
-        db.session.add(novo)
-        db.session.commit()
-
-        flash("Conta criada com sucesso! Faça login.", "success")
-        return redirect(url_for("login"))
-
-    return render_template("register.html")
-
-
-# ----- Login -----
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        email = request.form.get("email", "").strip().lower()
-        senha = request.form.get("senha", "")
-
-        user = User.query.filter_by(email=email).first()
-        if user and check_password_hash(user.senha, senha):
-            login_user(user, remember=True)
-            flash("Login realizado com sucesso!", "success")
-            return redirect(url_for("dashboard"))
-        flash("Email ou senha incorretos!", "error")
-
-    return render_template("login.html")
-
-
-# ----- Logout -----
-@app.route("/logout")
-@login_required
-def logout():
-    logout_user()
-    flash("Você saiu da conta.", "info")
-    return redirect(url_for("index"))
-
-
-# ----- Perfil (editar) -----
-@app.route('/perfil', methods=['GET', 'POST'])
-@login_required
-def perfil():
-    if request.method == "POST":
-        nome = request.form.get('nome', '').strip()
-        email = request.form.get('email', '').strip().lower()
-        senha = request.form.get('senha', '')
-
-        if nome:
-            current_user.nome = nome
-        if email:
-            # checar se email já é usado por outro
-            other = User.query.filter(User.email == email, User.id != current_user.id).first()
-            if other:
-                flash("Email já está em uso por outra conta.", "error")
-                return redirect(url_for('perfil'))
-            current_user.email = email
-
-        if senha and senha.strip() != "":
-            current_user.senha = generate_password_hash(senha)
-
-        # upload foto
-        if 'foto' in request.files:
-            foto = request.files['foto']
-            if foto and foto.filename != '' and allowed_file(foto.filename):
-                filename = secure_filename(f"{current_user.id}_{random.randint(1000,9999)}_{foto.filename}")
-                filepath = os.path.join(UPLOAD_FOLDER, filename)
-                foto.save(filepath)
-                current_user.foto = filename
-
-        db.session.commit()
-        flash("Perfil atualizado com sucesso!", "success")
-        return redirect(url_for('perfil'))
-
-    return render_template("perfil.html")
-
-
-# ----- Serve uploads (opcional, static already serves it but this is explicit) -----
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
-
-
-# ----- Dashboard -----
-@app.route("/dashboard", methods=["GET", "POST"])
-@login_required
-def dashboard():
-    # salvar treino manual
-    if request.method == "POST":
-        if request.form.get("action") == "salvar_treino":
-            try:
-                t = Treino(
-                    user_id=current_user.id,
-                    dias_semana_id=int(request.form["dias_semana_id"]),
-                    grupo_muscular=request.form["grupo_muscular"],
-                    exercicio=request.form["exercicio"],
-                    series=int(request.form["series"]),
-                    repeticoes=int(request.form["repeticoes"])
-                )
-                db.session.add(t)
-                db.session.commit()
-                flash("Treino salvo!", "success")
-            except Exception as e:
-                db.session.rollback()
-                flash("Erro ao salvar treino.", "error")
-            return redirect(url_for("dashboard"))
-
-    treinos = Treino.query.filter_by(user_id=current_user.id).order_by(Treino.dias_semana_id).all()
-    return render_template("dashboard.html", treinos=treinos)
-
-
-# ----- Configurações (mostra tema atual salvo no usuário) -----
-@app.route("/configuracoes")
-@login_required
-def configuracoes():
-    return render_template("config.html")
-
-
-# ----- Trocar tema (atualiza preferência do usuário) -----
-@app.route("/trocar_tema", methods=["POST"])
-@login_required
-def trocar_tema():
-    novo = "dark" if current_user.theme != "dark" else "light"
-    current_user.theme = novo
-    db.session.commit()
-    return {"status": "ok", "theme": novo}
-
-
-# ----- Gerador de planos (seu código original, colado e adaptado) -----
-@app.route("/gerar_plano", methods=["POST"])
-@login_required
-def gerar_plano():
-    # (mantive seu gerador original, com pequenas proteções)
-    nivel = request.form.get("nivel", "iniciante")
-    objetivo = request.form.get("objetivo", "hipertrofia")
-    divisao = request.form.get("divisao", "livre")
-    dias = request.form.getlist("dias")
-    try:
-        peso = float(request.form.get("peso") or 0)
-    except:
-        peso = 0.0
-    try:
-        altura = float(request.form.get("altura") or 0)
-    except:
-        altura = 0.0
-    try:
-        idade = int(request.form.get("idade") or 0)
-    except:
-        idade = 0
-
-    if not dias:
-        flash("Selecione pelo menos um dia!", "error")
-        return redirect(url_for("dashboard"))
-
-    imc = None
-    if altura > 0:
-        try:
-            imc = peso / (altura ** 2)
-        except:
-            imc = None
-
+def build_plan(nivel, objetivo, divisao, dias, peso, altura, idade):
+    """
+    Gera uma lista de dicionários representando exercícios.
+    Não salva no DB — só retorna os itens.
+    Cada item: {'dia': dia_idx, 'grupo': ..., 'exercicio': ..., 'series': n, 'repeticoes': n}
+    """
+    # lista de exercícios (sintética)
     EXS = [
         ("Supino reto", "Peito", ["Ombro","Tríceps"], "barra/halteres", 3),
         ("Supino inclinado", "Peito", ["Ombro","Tríceps"], "barra/halteres", 3),
@@ -280,12 +97,7 @@ def gerar_plano():
 
     grupos = {}
     for nome, prim, secs, equip, dif in EXS:
-        grupos.setdefault(prim, []).append({
-            "nome": nome,
-            "sec": secs,
-            "equip": equip,
-            "dif": dif
-        })
+        grupos.setdefault(prim, []).append({"nome": nome, "dif": dif})
 
     if objetivo == "emagrecimento":
         series_base = 3
@@ -298,6 +110,14 @@ def gerar_plano():
         reps_base = 10
 
     mult_nivel = {"iniciante": 0.7, "intermediario": 1.0, "avancado": 1.25}.get(nivel, 1.0)
+
+    if altura > 0:
+        try:
+            imc = peso / (altura ** 2)
+        except:
+            imc = None
+    else:
+        imc = None
 
     if imc and imc > 30:
         for g in list(grupos.keys()):
@@ -343,13 +163,22 @@ def gerar_plano():
         return out
 
     dias_lista = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"]
-    mapa_dias = [dias_lista.index(d) for d in dias]
+    mapa_dias = [dias_lista.index(d) for d in dias] if dias else []
 
     grupos_disponiveis = [g for g in ["Peito","Costas","Pernas","Ombro","Bíceps","Tríceps","Core"] if g in grupos]
     used_exercises = set()
+    plan = []
 
-    Treino.query.filter_by(user_id=current_user.id).delete()
-    total_inseridos = 0
+    # quantidade de exercícios por dia base
+    num_dias = len(mapa_dias) or 1
+    if num_dias <= 2:
+        ex_por_dia_base = 6
+    elif num_dias == 3:
+        ex_por_dia_base = 5
+    elif num_dias == 4:
+        ex_por_dia_base = 4
+    else:
+        ex_por_dia_base = 3
 
     def selecionar_exercicios(lista, n, prefer_dif_max=3):
         candidatos = [e for e in lista if e["nome"] not in used_exercises and e["dif"] <= prefer_dif_max]
@@ -360,18 +189,8 @@ def gerar_plano():
         selecionados = random.sample(candidatos, k=min(n, len(candidatos)))
         return selecionados
 
-    num_dias = len(mapa_dias)
-    if num_dias <= 2:
-        ex_por_dia_base = 6
-    elif num_dias == 3:
-        ex_por_dia_base = 5
-    elif num_dias == 4:
-        ex_por_dia_base = 4
-    else:
-        ex_por_dia_base = 3
-
     def processar_dia(dia_id, grupos_para_dia):
-        nonlocal total_inseridos
+        nonlocal plan
         grupos_para_dia = expand_groups(grupos_para_dia)
         per_group = max(1, ex_por_dia_base // max(1, len(grupos_para_dia)))
         extras = ex_por_dia_base - per_group * len(grupos_para_dia)
@@ -384,20 +203,17 @@ def gerar_plano():
             for ex in selecionados:
                 series = max(1, int(series_base * mult_nivel))
                 reps = max(4, int(reps_base * mult_nivel))
-                novo = Treino(
-                    user_id=current_user.id,
-                    dias_semana_id=dia_id,
-                    grupo_muscular=g,
-                    exercicio=ex["nome"],
-                    series=series,
-                    repeticoes=reps
-                )
-                db.session.add(novo)
+                plan.append({
+                    "dia": dia_id,
+                    "grupo": g,
+                    "exercicio": ex["nome"],
+                    "series": series,
+                    "repeticoes": reps
+                })
                 used_exercises.add(ex["nome"])
-                total_inseridos += 1
 
     if divisao == "livre" or DIVISAO_MAP.get(divisao) is None:
-        for i, dia in enumerate(mapa_dias):
+        for i, dia in enumerate(mapa_dias if mapa_dias else [0]):
             grupo = grupos_disponiveis[i % len(grupos_disponiveis)]
             processar_dia(dia, [grupo])
     else:
@@ -406,23 +222,214 @@ def gerar_plano():
             padrao_dia = pattern[idx_d % len(pattern)]
             processar_dia(dia, padrao_dia)
 
-    db.session.commit()
-    flash(f"Plano inteligente ({divisao.upper()}) gerado com sucesso! {total_inseridos} exercícios adicionados.", "success")
+    return plan
+
+
+# -------------------------
+# Routes
+# -------------------------
+@app.route("/")
+def index():
+    get_flashed_messages()
+    return render_template("index.html")
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        nome = request.form.get("nome", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        senha = request.form.get("senha", "")
+
+        if not nome or not email or not senha:
+            flash("Preencha todos os campos.", "error")
+            return redirect(url_for("register"))
+
+        if User.query.filter_by(email=email).first():
+            flash("Este email já está cadastrado!", "error")
+            return redirect(url_for("register"))
+
+        novo = User(nome=nome, email=email, senha=generate_password_hash(senha))
+        db.session.add(novo)
+        db.session.commit()
+        flash("Conta criada com sucesso! Faça login.", "success")
+        return redirect(url_for("login"))
+
+    return render_template("register.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        senha = request.form.get("senha", "")
+        user = User.query.filter_by(email=email).first()
+        if user and check_password_hash(user.senha, senha):
+            login_user(user, remember=True)
+            flash("Login realizado com sucesso!", "success")
+            return redirect(url_for("dashboard"))
+        flash("Email ou senha incorretos!", "error")
+    return render_template("login.html")
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("Você saiu da conta.", "info")
+    return redirect(url_for("index"))
+
+
+@app.route('/perfil', methods=['GET', 'POST'])
+@login_required
+def perfil():
+    if request.method == "POST":
+        nome = request.form.get('nome', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        senha = request.form.get('senha', '')
+        if nome:
+            current_user.nome = nome
+        if email:
+            other = User.query.filter(User.email == email, User.id != current_user.id).first()
+            if other:
+                flash("Email já está em uso por outra conta.", "error")
+                return redirect(url_for('perfil'))
+            current_user.email = email
+        if senha and senha.strip() != "":
+            current_user.senha = generate_password_hash(senha)
+        if 'foto' in request.files:
+            foto = request.files['foto']
+            if foto and foto.filename != '' and allowed_file(foto.filename):
+                filename = secure_filename(f"{current_user.id}_{random.randint(1000,9999)}_{foto.filename}")
+                filepath = os.path.join(UPLOAD_FOLDER, filename)
+                foto.save(filepath)
+                current_user.foto = filename
+        db.session.commit()
+        flash("Perfil atualizado com sucesso!", "success")
+        return redirect(url_for('perfil'))
+    return render_template("perfil.html")
+
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
+@app.route("/configuracoes")
+@login_required
+def configuracoes():
+    return render_template("config.html")
+
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    # dados para cards resumidos
+    total = Treino.query.filter_by(user_id=current_user.id).count()
+    stats = Treino.query.filter_by(user_id=current_user.id).order_by(Treino.dias_semana_id).limit(6).all()
+    return render_template("dashboard.html", total=total, treinos=stats)
+
+
+@app.route("/gerador")
+@login_required
+def gerador():
+    # página exclusivamente do gerador (AJAX preview + salvar)
+    return render_template("gerador.html")
+
+
+@app.route("/gerar_plano", methods=["POST"])
+@login_required
+def gerar_plano():
+    # os dados podem vir via form normal (submit) ou fetch (AJAX)
+    nivel = request.form.get("nivel", "iniciante")
+    objetivo = request.form.get("objetivo", "hipertrofia")
+    divisao = request.form.get("divisao", "livre")
+    dias = request.form.getlist("dias")
+    try:
+        peso = float(request.form.get("peso") or 0)
+    except:
+        peso = 0.0
+    try:
+        altura = float(request.form.get("altura") or 0)
+    except:
+        altura = 0.0
+    try:
+        idade = int(request.form.get("idade") or 0)
+    except:
+        idade = 0
+
+    # gera plano (lista de dicts)
+    plan = build_plan(nivel, objetivo, divisao, dias, peso, altura, idade)
+
+    # se for preview (AJAX), retorna JSON sem salvar
+    if request.args.get('preview') == '1' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({"status":"ok", "plan": plan})
+
+    # caso contrário, salva no DB substituindo treinos antigos
+    try:
+        Treino.query.filter_by(user_id=current_user.id).delete()
+        for item in plan:
+            novo = Treino(
+                user_id=current_user.id,
+                dias_semana_id=int(item['dia']),
+                grupo_muscular=item['grupo'],
+                exercicio=item['exercicio'],
+                series=int(item['series']),
+                repeticoes=int(item['repeticoes'])
+            )
+            db.session.add(novo)
+        db.session.commit()
+        flash(f"Plano gerado com sucesso! {len(plan)} exercícios adicionados.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash("Erro ao salvar plano.", "error")
     return redirect(url_for("dashboard"))
 
+@app.route("/trocar_tema", methods=["POST"])
+@login_required
+def trocar_tema():
+    user = current_user
+    novo = "light" if user.theme == "dark" else "dark"
+    user.theme = novo
+    db.session.commit()
+    return {"status": "ok", "tema": novo}
 
-# -------------------------
+
+
+# API endpoints
+@app.route("/api/treinos_stats")
+@login_required
+def api_treinos_stats():
+    counts = [0] * 7
+    treinos = Treino.query.filter_by(user_id=current_user.id).all()
+    for t in treinos:
+        try:
+            idx = int(t.dias_semana_id) % 7
+            counts[idx] += 1
+        except:
+            pass
+    labels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+    return jsonify({"labels": labels, "data": counts, "total": sum(counts)})
+
+@app.route("/api/treinos")
+@login_required
+def api_treinos():
+    treinos = Treino.query.filter_by(user_id=current_user.id).order_by(Treino.dias_semana_id).all()
+    out = []
+    for t in treinos:
+        out.append({
+            "id": t.id,
+            "dia": t.dias_semana_id,
+            "grupo": t.grupo_muscular,
+            "exercicio": t.exercicio,
+            "series": t.series,
+            "repeticoes": t.repeticoes
+        })
+    return jsonify(out)
+
+
 # Init DB
-# -------------------------
 with app.app_context():
     db.create_all()
-    # Se você está alterando o modelo (adicionou 'foto' ou 'theme') e já tem um fitplanner.db antigo,
-    # remova o arquivo 'fitplanner.db' antes de rodar para recriar com as novas colunas:
-    # os.remove('fitplanner.db')  # <-- só use se souber o que está fazendo
 
-
-# -------------------------
-# Run
-# -------------------------
 if __name__ == "__main__":
     app.run(debug=True)

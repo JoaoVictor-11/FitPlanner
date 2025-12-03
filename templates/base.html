@@ -11,18 +11,16 @@
 
 <body class="{% if request.endpoint == 'index' %}index-page{% endif %}">
 
-  {% if request.endpoint in ['dashboard', 'perfil', 'configuracoes'] %}
-  <aside class="sidebar" id="sidebar">
-      <div class="sidebar-top">
-          <button id="sidebarToggle" class="icon-btn" aria-label="Toggle sidebar">☰</button>
-          <div class="logo-area">
-              <div class="logo-icon">🏋️</div>
-              <div class="logo-text">FitPlanner</div>
-          </div>
+  {% if request.endpoint in ['dashboard', 'perfil', 'configuracoes', 'gerador'] %}
+  <aside class="sidebar" id="sidebar" aria-label="Sidebar">
+      <div class="logo-area">
+          <div class="logo-icon">🏋️</div>
+          <div class="logo-text">FitPlanner</div>
       </div>
 
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav" role="navigation">
           <a class="sidebar-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">🏠 <span class="label">Dashboard</span></a>
+          <a class="sidebar-link {% if request.endpoint == 'gerador' %}active{% endif %}" href="{{ url_for('gerador') }}">🔧 <span class="label">Gerador</span></a>
           <a class="sidebar-link {% if request.endpoint == 'perfil' %}active{% endif %}" href="{{ url_for('perfil') }}">👤 <span class="label">Perfil</span></a>
           <a class="sidebar-link {% if request.endpoint == 'configuracoes' %}active{% endif %}" href="{{ url_for('configuracoes') }}">⚙ <span class="label">Configurações</span></a>
       </nav>
@@ -33,14 +31,22 @@
   </aside>
   {% endif %}
 
-  <header class="topbar {% if request.endpoint not in ['dashboard','perfil','configuracoes'] %}no-sidebar{% endif %}">
+  <header class="topbar {% if request.endpoint not in ['dashboard','perfil','configuracoes','gerador'] %}no-sidebar{% endif %}">
     <div class="container">
-      <h1>FitPlanner</h1>
-      <div class="config-icon" id="configIcon">⚙</div>
+      <div class="topbar-left">
+        <button id="sidebarToggle" class="btn small" aria-label="Toggle sidebar">☰</button>
+        <h1 class="app-title">FitPlanner</h1>
+      </div>
+      <div class="topbar-right">
+        <button id="themeToggle" class="btn small" title="Alternar tema">🌗</button>
+        {% if current_user.is_authenticated %}
+          <a class="btn small ghost" href="{{ url_for('logout') }}">Sair</a>
+        {% endif %}
+      </div>
     </div>
   </header>
-
-  <main class="main-content {% if request.endpoint not in ['dashboard','perfil','configuracoes'] %}no-sidebar{% endif %}">
+  
+  <main class="main-content {% if request.endpoint not in ['dashboard','perfil','configuracoes','gerador'] %}no-sidebar{% endif %}">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -50,14 +56,15 @@
           {% endfor %}
         </div>
         <script>
+          // fade / remove mount
           setTimeout(() => {
             const fb = document.getElementById('flashBox');
             if (fb) {
               fb.style.opacity = '0';
               fb.style.transform = 'translateY(-6px)';
-              setTimeout(() => fb.remove(), 400); // remove do DOM depois da animação
+              setTimeout(() => fb.remove(), 500);
             }
-          }, 2500); // some depois de 2.5s
+          }, 2600);
         </script>
       {% endif %}
     {% endwith %}
@@ -65,29 +72,25 @@
     {% block content %}{% endblock %}
   </main>
 
+  <!-- sidebar toggle & persist -->
   <script>
     (function(){
       const toggle = document.getElementById('sidebarToggle');
       const sidebar = document.getElementById('sidebar');
       if (!toggle || !sidebar) return;
-
-      // aplicar estado salvo
       try {
         if (localStorage.getItem('fp_sidebar_collapsed') === '1') sidebar.classList.add('collapsed');
       } catch(e){}
-
       toggle.addEventListener('click', () => {
         sidebar.classList.toggle('collapsed');
         try { localStorage.setItem('fp_sidebar_collapsed', sidebar.classList.contains('collapsed') ? '1' : '0'); } catch(e){}
       });
-
-      // mobile open/close (clicar no toggle quando a sidebar está fora da tela)
-      toggle.addEventListener('dblclick', () => {
-        sidebar.classList.toggle('open');
-      });
+      // double click to open on mobile
+      toggle.addEventListener('dblclick', () => sidebar.classList.toggle('open'));
     })();
   </script>
 
   <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  <!-- gerador.js included only on gerador page by that template if needed -->
 </body>
 </html>

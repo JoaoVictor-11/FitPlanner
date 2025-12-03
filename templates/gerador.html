@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="card">
+  <h3>Gerador de treinos</h3>
+  <p class="small">Escolha as opções e clique em <strong>Pré-visualizar</strong> para ver o plano. Depois pode salvar.</p>
+
+  <form id="geradorForm">
+    <div class="form-grid">
+      <div>
+        <label>Nível</label>
+        <select name="nivel"><option value="iniciante">Iniciante</option><option value="intermediario">Intermediário</option><option value="avancado">Avançado</option></select>
+      </div>
+      <div>
+        <label>Objetivo</label>
+        <select name="objetivo"><option value="hipertrofia">Hipertrofia</option><option value="forca">Força</option><option value="emagrecimento">Emagrecimento</option></select>
+      </div>
+      <div>
+        <label>Divisão</label>
+        <select name="divisao"><option value="livre">Livre</option><option value="abc">ABC</option><option value="abcd">ABCD</option><option value="abcde">ABCDE</option><option value="ppl">PPL</option></select>
+      </div>
+      <div class="full">
+        <label>Dias</label>
+        <div class="dias-semana">
+          <input type="checkbox" id="seg" name="dias" value="Seg"><label for="seg">Seg</label>
+          <input type="checkbox" id="ter" name="dias" value="Ter"><label for="ter">Ter</label>
+          <input type="checkbox" id="qua" name="dias" value="Qua"><label for="qua">Qua</label>
+          <input type="checkbox" id="qui" name="dias" value="Qui"><label for="qui">Qui</label>
+          <input type="checkbox" id="sex" name="dias" value="Sex"><label for="sex">Sex</label>
+          <input type="checkbox" id="sab" name="dias" value="Sáb"><label for="sab">Sáb</label>
+          <input type="checkbox" id="dom" name="dias" value="Dom"><label for="dom">Dom</label>
+        </div>
+      </div>
+
+      <div><label>Peso (kg)</label><input name="peso" type="number" step="0.1"></div>
+      <div><label>Altura (m)</label><input name="altura" type="number" step="0.01" placeholder="1.75"></div>
+      <div><label>Idade</label><input name="idade" type="number"></div>
+
+      <div class="full">
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button type="button" id="previewBtn" class="btn primary">Pré-visualizar</button>
+          <button type="button" id="saveBtn" class="btn">Salvar plano</button>
+          <div id="geradorMsg" class="small" style="margin-left:12px;"></div>
+        </div>
+      </div>
+    </div>
+  </form>
+</section>
+
+<section class="card" id="previewCard" style="display:none;">
+  <h3>Plano gerado (pré-visualização)</h3>
+  <div id="previewList"></div>
+</section>
+
+<script>
+async function formToFormData(form) {
+  const fd = new FormData(form);
+  // checkboxes with same name: need to keep them as repeated entries
+  return fd;
+}
+
+document.getElementById('previewBtn').addEventListener('click', async () => {
+  const form = document.getElementById('geradorForm');
+  const fd = await formToFormData(form);
+  try {
+    const res = await fetch('/gerar_plano?preview=1', { method:'POST', body: fd, headers: {'X-Requested-With':'XMLHttpRequest'} });
+    const json = await res.json();
+    if (json.status !== 'ok') throw new Error('Erro');
+    const list = json.plan;
+    const container = document.getElementById('previewList');
+    container.innerHTML = '';
+    if (!list.length) container.innerHTML = '<p>Nenhum exercício gerado.</p>';
+    else {
+      const byDay = {};
+      list.forEach(it => {
+        (byDay[it.dia] = byDay[it.dia] || []).push(it);
+      });
+      for (const dia of Object.keys(byDay).sort()) {
+        const div = document.createElement('div');
+        div.innerHTML = `<h4>Dia ${dia}</h4>`;
+        const ul = document.createElement('ul');
+        byDay[dia].forEach(it => {
+          const li = document.createElement('li');
+          li.textContent = `${it.exercicio} — ${it.grupo} — ${it.series}x${it.repeticoes}`;
+          ul.appendChild(li);
+        });
+        div.appendChild(ul);
+        container.appendChild(div);
+      }
+      document.getElementById('previewCard').style.display = 'block';
+    }
+    document.getElementById('geradorMsg').textContent = 'Pré-visualização carregada';
+  } catch(e) {
+    document.getElementById('geradorMsg').textContent = 'Erro ao gerar pré-visualização';
+  }
+});
+
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  const form = document.getElementById('geradorForm');
+  // submit the form normally to persist (will redirect to dashboard)
+  const fd = new FormData(form);
+  // use fetch to post and then redirect manually
+  try {
+    const res = await fetch('/gerar_plano', { method:'POST', body: fd });
+    if (res.redirected) {
+      window.location = res.url;
+      return;
+    }
+    // fallback: go to dashboard
+    window.location = '/dashboard';
+  } catch(e) {
+    alert('Erro ao salvar plano');
+  }
+});
+</script>
+
+{% endblock %}

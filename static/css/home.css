@@ -13,3 +13,11 @@
 .hero-buttons .btn{ min-width:170px; padding:12px 18px; font-size:1rem; border-radius:10px; }
 .hero-buttons .btn.primary{ box-shadow: 0 10px 30px rgba(53,212,135,0.06); }
 .hero-buttons .btn.ghost{ border-color: var(--border); color:var(--text); }
+.index-page .sidebar{display:none!important}
+.index-page .topbar{background:linear-gradient(90deg,rgba(10,10,10,0.4),rgba(20,20,24,0.35));margin-left:0;padding:28px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.index-page .topbar h1{text-align:center;color:var(--text)}
+.hero-home{margin-top:80px;display:flex;flex-direction:column;align-items:center;text-align:center;padding:18px}
+.hero-home h2{font-size:2.1rem;margin-bottom:8px;color:var(--text)}
+.hero-home p{color:var(--text-dim);font-size:1.05rem;margin-bottom:22px}
+.hero-buttons{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.hero-buttons .btn{min-width:170px;padding:12px 18px}

@@ -1,123 +1,51 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Dashboard</h2>
+<div class="grid-cards">
+  <div class="card small-card">
+    <h4>Total de treinos</h4>
+    <div class="big">{{ total }}</div>
+  </div>
+
+  <div class="card small-card">
+    <h4>Treinos recentes</h4>
+    <div class="small">
+      {% if treinos %}
+        <ul>
+          {% for t in treinos %}
+            <li>{{ t.exercicio }} — dia {{ t.dias_semana_id }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="small">Nenhum treino</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card small-card">
+    <h4>Gerar plano</h4>
+    <div class="small">Vá para a página do Gerador para criar um novo plano rápido.</div>
+    <div style="margin-top:10px;"><a class="btn primary" href="{{ url_for('gerador') }}">Abrir gerador</a></div>
+  </div>
+</div>
 
 <section class="card">
-  <h3>Gerar plano automaticamente</h3>
-
-  <form method="post" action="{{ url_for('gerar_plano') }}">
-    <div class="form-grid">
-      <div>
-        <label>Nível</label>
-        <select name="nivel">
-          <option value="iniciante">Iniciante</option>
-          <option value="intermediario">Intermediário</option>
-          <option value="avancado">Avançado</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Objetivo</label>
-        <select name="objetivo">
-          <option value="hipertrofia">Hipertrofia</option>
-          <option value="forca">Força</option>
-          <option value="emagrecimento">Emagrecimento</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Divisão</label>
-        <select name="divisao">
-          <option value="livre">Livre</option>
-          <option value="abc">ABC</option>
-          <option value="abcd">ABCD</option>
-          <option value="abcde">ABCDE</option>
-          <option value="ppl">Push/Pull/Legs</option>
-        </select>
-      </div>
-
-      <div class="full">
-        <label>Dias</label>
-        <div class="dias-semana">
-          <input type="checkbox" id="seg" name="dias" value="Seg"><label for="seg">Seg</label>
-          <input type="checkbox" id="ter" name="dias" value="Ter"><label for="ter">Ter</label>
-          <input type="checkbox" id="qua" name="dias" value="Qua"><label for="qua">Qua</label>
-          <input type="checkbox" id="qui" name="dias" value="Qui"><label for="qui">Qui</label>
-          <input type="checkbox" id="sex" name="dias" value="Sex"><label for="sex">Sex</label>
-          <input type="checkbox" id="sab" name="dias" value="Sáb"><label for="sab">Sáb</label>
-          <input type="checkbox" id="dom" name="dias" value="Dom"><label for="dom">Dom</label>
-        </div>
-      </div>
-
-      <div>
-        <label>Peso (kg)</label>
-        <input type="number" name="peso" step="0.1">
-      </div>
-
-      <div>
-        <label>Altura (m)</label>
-        <input type="number" name="altura" step="0.01" placeholder="ex: 1.75">
-      </div>
-
-      <div>
-        <label>Idade</label>
-        <input type="number" name="idade">
-      </div>
-
-      <div class="full">
-        <button class="btn" type="submit">Gerar plano</button>
-      </div>
-    </div>
-  </form>
+  <h3>Progresso semanal</h3>
+  <p class="small">Contagem de exercícios por dia</p>
+  <div style="height:320px; max-width:900px;">
+    <canvas id="progressChart"></canvas>
+  </div>
 </section>
 
 <section class="card">
-  <h3>Adicionar treino manualmente</h3>
-
-  <form method="post">
-    <input type="hidden" name="action" value="salvar_treino">
-    <div class="form-grid">
-      <div>
-        <label>Dia (0=Segunda)</label>
-        <input type="number" name="dias_semana_id" min="0" max="6" value="0">
-      </div>
-      <div>
-        <label>Grupo muscular</label>
-        <input type="text" name="grupo_muscular" required>
-      </div>
-      <div>
-        <label>Exercício</label>
-        <input type="text" name="exercicio" required>
-      </div>
-      <div>
-        <label>Séries</label>
-        <input type="number" name="series" min="1" value="3">
-      </div>
-      <div>
-        <label>Repetições</label>
-        <input type="number" name="repeticoes" min="1" value="12">
-      </div>
-      <div class="full">
-        <button class="btn" type="submit">Salvar treino</button>
-      </div>
-    </div>
-  </form>
-</section>
-
-<section class="card">
-  <h3>Seus treinos</h3>
+  <h3>Últimos treinos</h3>
   {% if treinos %}
-    {% set dias_semana = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'] %}
     <table class="table">
-      <thead>
-        <tr><th>Dia</th><th>Grupo</th><th>Exercício</th><th>Séries</th><th>Reps</th></tr>
-      </thead>
+      <thead><tr><th>Dia</th><th>Exercício</th><th>Séries</th><th>Reps</th></tr></thead>
       <tbody>
         {% for t in treinos %}
         <tr>
-          <td>{{ dias_semana[t.dias_semana_id] }}</td>
-          <td>{{ t.grupo_muscular }}</td>
+          <td>{{ t.dias_semana_id }}</td>
           <td>{{ t.exercicio }}</td>
           <td>{{ t.series }}</td>
           <td>{{ t.repeticoes }}</td>
@@ -129,5 +57,28 @@
     <p>Nenhum treino registrado.</p>
   {% endif %}
 </section>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+async function loadProgress() {
+  try {
+    const res = await fetch('/api/treinos_stats');
+    const json = await res.json();
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: json.labels,
+        datasets: [{ label: 'Exercícios', data: json.data, backgroundColor: 'rgba(53,212,135,0.9)', borderRadius: 6 }]
+      },
+      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+    });
+  } catch(e) {
+    console.error(e);
+  }
+}
+document.addEventListener('DOMContentLoaded', loadProgress);
+</script>
 
 {% endblock %}
