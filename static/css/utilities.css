@@ -1,3 +1,5 @@
-.kv { display:flex; justify-content:space-between; }
-.small { font-size:0.9rem; color:var(--text-light); }
-.debug-border { outline:1px dashed rgba(255,255,255,0.04); }
+.kv{ display:flex; justify-content:space-between; gap:12px; align-items:center; }
+.small{ font-size:0.9rem; color:var(--text-dim); }
+.debug-border{ outline:1px dashed rgba(255,255,255,0.04); }
+.center{ text-align:center; }
+.badge{ display:inline-block; padding:6px 10px; border-radius:999px; font-weight:800; background: linear-gradient(90deg,var(--accent),var(--accent-2)); color: var(--accent-contrast); }

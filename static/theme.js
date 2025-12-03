@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const themeBtn = document.getElementById("sidebarThemeBtn") || document.getElementById("themeToggle");
   const savedTheme = localStorage.getItem("theme");
 
-  // Aplica tema salvo no localStorage (se houver) ao carregar
+  // aplica tema salvo no localStorage (se houver) ao carregar
   if (savedTheme) {
     document.documentElement.setAttribute("data-theme", savedTheme);
     if (savedTheme === "dark") {
@@ -18,16 +18,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (htmlTheme) {
       localStorage.setItem("theme", htmlTheme);
       if (htmlTheme === "dark") document.body.classList.add("dark");
+      else document.body.classList.remove("dark");
     }
   }
 
-  // Sidebar toggle (colapsar)
+  // sidebar toggle (colapsar)
   if (toggleBtn && sidebar) {
     toggleBtn.addEventListener("click", () => {
       sidebar.classList.toggle("collapsed");
-      // salvar preferência de sidebar (opcional)
       const isCollapsed = sidebar.classList.contains("collapsed");
-      localStorage.setItem("sidebarCollapsed", isCollapsed ? "1" : "0");
+      try { localStorage.setItem("sidebarCollapsed", isCollapsed ? "1" : "0"); } catch(e){}
     });
 
     // aplicar estado salvo
@@ -35,21 +35,23 @@ document.addEventListener("DOMContentLoaded", () => {
     if (sc === "1") sidebar.classList.add("collapsed");
   }
 
-  // Alternar tema localmente e tentar notificar servidor
+  // alternar tema localmente e tentar notificar servidor
   if (themeBtn) {
     themeBtn.addEventListener("click", async () => {
       const current = document.documentElement.getAttribute("data-theme") || "dark";
       const next = current === "dark" ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", next);
-      if (next === "dark") document.body.classList.add("dark"); else document.body.classList.remove("dark");
+      if (next === "dark') {
+        document.body.classList.add('dark');
+      } else {
+        document.body.classList.remove('dark');
+      }
       localStorage.setItem("theme", next);
 
-      // tentar atualizar preferência do usuário no servidor
+      // tentar atualizar preferência do usuário no servidor (rota /trocar_tema)
       try {
         await fetch("/trocar_tema", { method: "POST", credentials: "same-origin" });
-      } catch (e) {
-        // sem problemas se falhar
-      }
+      } catch (e) { /* sem problemas se falhar */ }
     });
   }
 });

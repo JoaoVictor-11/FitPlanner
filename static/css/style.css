@@ -1,6 +1,6 @@
-@import url("/static/css/base.css");
-@import url("/static/css/layout.css");
-@import url("/static/css/components.css");
-@import url("/static/css/utilities.css");
-@import url("/static/css/home.css");
-@import url("/static/css/perfil.css");
+@import url("base.css");
+@import url("layout.css");
+@import url("components.css");
+@import url("utilities.css");
+@import url("home.css");
+@import url("perfil.css");

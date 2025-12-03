@@ -11,7 +11,7 @@
 
 <body class="{% if request.endpoint == 'index' %}index-page{% endif %}">
 
-  {% if current_user.is_authenticated and request.endpoint != 'index' %}
+  {% if request.endpoint in ['dashboard', 'perfil', 'configuracoes'] %}
   <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
           <button id="sidebarToggle" class="icon-btn" aria-label="Toggle sidebar">☰</button>
@@ -22,9 +22,9 @@
       </div>
 
       <nav class="sidebar-nav">
-          <a class="sidebar-link" href="{{ url_for('dashboard') }}">🏠 <span class="label">Dashboard</span></a>
-          <a class="sidebar-link" href="{{ url_for('perfil') }}">👤 <span class="label">Perfil</span></a>
-          <a class="sidebar-link" href="{{ url_for('configuracoes') }}">⚙ <span class="label">Configurações</span></a>
+          <a class="sidebar-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">🏠 <span class="label">Dashboard</span></a>
+          <a class="sidebar-link {% if request.endpoint == 'perfil' %}active{% endif %}" href="{{ url_for('perfil') }}">👤 <span class="label">Perfil</span></a>
+          <a class="sidebar-link {% if request.endpoint == 'configuracoes' %}active{% endif %}" href="{{ url_for('configuracoes') }}">⚙ <span class="label">Configurações</span></a>
       </nav>
 
       <div class="sidebar-footer">
@@ -33,26 +33,60 @@
   </aside>
   {% endif %}
 
-  <header class="topbar {% if request.endpoint == 'index' %}topbar-index{% endif %}">
+  <header class="topbar {% if request.endpoint not in ['dashboard','perfil','configuracoes'] %}no-sidebar{% endif %}">
     <div class="container">
       <h1>FitPlanner</h1>
+      <div class="config-icon" id="configIcon">⚙</div>
     </div>
   </header>
 
-  <main class="main-content {% if request.endpoint == 'index' %}no-sidebar{% endif %}">
+  <main class="main-content {% if request.endpoint not in ['dashboard','perfil','configuracoes'] %}no-sidebar{% endif %}">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <div class="flash-box">
+        <div class="flash-box" id="flashBox">
           {% for category, msg in messages %}
             <div class="flash {{ category }}">{{ msg }}</div>
           {% endfor %}
         </div>
+        <script>
+          setTimeout(() => {
+            const fb = document.getElementById('flashBox');
+            if (fb) {
+              fb.style.opacity = '0';
+              fb.style.transform = 'translateY(-6px)';
+              setTimeout(() => fb.remove(), 400); // remove do DOM depois da animação
+            }
+          }, 2500); // some depois de 2.5s
+        </script>
       {% endif %}
     {% endwith %}
 
     {% block content %}{% endblock %}
   </main>
+
+  <script>
+    (function(){
+      const toggle = document.getElementById('sidebarToggle');
+      const sidebar = document.getElementById('sidebar');
+      if (!toggle || !sidebar) return;
+
+      // aplicar estado salvo
+      try {
+        if (localStorage.getItem('fp_sidebar_collapsed') === '1') sidebar.classList.add('collapsed');
+      } catch(e){}
+
+      toggle.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+        try { localStorage.setItem('fp_sidebar_collapsed', sidebar.classList.contains('collapsed') ? '1' : '0'); } catch(e){}
+      });
+
+      // mobile open/close (clicar no toggle quando a sidebar está fora da tela)
+      toggle.addEventListener('dblclick', () => {
+        sidebar.classList.toggle('open');
+      });
+    })();
+  </script>
 
   <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
 </body>

@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from flask import get_flashed_messages
 import os
 import random
 
@@ -64,6 +65,7 @@ def allowed_file(filename):
 
 @app.route("/")
 def index():
+    get_flashed_messages()  # limpa mensagens antigas
     return render_template("index.html")
 
 

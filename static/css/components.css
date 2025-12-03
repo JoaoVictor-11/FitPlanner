@@ -1,75 +1,101 @@
-/* ===== CARDS ===== */
-.card {
-    background: var(--bg-card);
-    padding: 22px 24px;
-    border-radius: 14px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-    margin-bottom: 24px;
+/* CARDS */
+.card{
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  color: var(--text);
+  transition: transform .12s ease, box-shadow .12s;
+}
+.card:hover{ transform: translateY(-6px); box-shadow: var(--shadow-strong); }
+.card h3{ margin:0 0 12px; font-size:1.05rem; }
+
+/* FORMS */
+form{ display:flex; flex-direction:column; gap:14px; }
+label{ color:var(--text-dim); font-weight:700; font-size:0.95rem; }
+input, select, textarea{
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 10px;
+  transition: box-shadow .12s, border-color .12s;
+}
+input:focus, select:focus, textarea:focus{ box-shadow: 0 8px 26px rgba(53,212,135,0.06); border-color: var(--accent); }
+
+/* BUTTONS */
+.btn{
+  padding:12px 14px;
+  border-radius:10px;
+  font-weight:700;
+  transition: transform .12s, box-shadow .12s;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  border: none;
 }
 
-/* ===== FORM ===== */
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+/* primary gradient (verde) */
+.btn.primary{
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color: var(--accent-contrast);
+  box-shadow: 0 10px 30px rgba(53,212,135,0.08);
+}
+.btn.primary:hover{ transform: translateY(-2px); }
+
+/* ghost / outline */
+.btn.ghost{
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
 }
 
-label { font-weight: 600; color: var(--text-light); }
+/* small */
+.btn.small{ padding:8px 10px; font-size:0.9rem; }
 
-input, select {
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--bg-card);
-    color: var(--text);
+/* FLASH */
+.flash{ padding:12px; border-radius:10px; margin-bottom:12px; font-weight:700; }
+.flash.success{ background: linear-gradient(90deg,#12a454,#0b8f3a); color:#eaffef; }
+.flash.warning{ background: linear-gradient(90deg,#ffb94d,#ff9a2c); color:#2a1700; }
+.flash.danger{ background: linear-gradient(90deg,#ff6b6b,#ff4b4b); color:#fff; }
+
+/* PILLS - dias da semana */
+.dias-semana{ display:flex; gap:8px; flex-wrap:wrap; }
+.dias-semana input[type="checkbox"]{ display:none; }
+.dias-semana label{
+  padding:8px 12px; border-radius:999px; border:1px solid var(--border); cursor:pointer; color:var(--text); background:transparent;
+}
+.dias-semana input:checked + label{ background: linear-gradient(90deg,var(--accent),var(--accent-2)); color:var(--accent-contrast); }
+
+/* TABLES */
+.table{ width:100%; border-collapse:collapse; font-size:0.95rem; }
+.table thead th{ text-align:left; padding:10px 12px; color:var(--text-dim); font-weight:700; border-bottom:1px solid var(--border); }
+.table tbody td{ padding:12px; border-bottom:1px solid rgba(255,255,255,0.02); color:var(--text); background:transparent; }
+
+.flash-box {
+    transition: opacity .4s ease, transform .4s ease;
 }
 
-/* ===== BOTÕES ===== */
-.btn {
-    padding: 12px;
-    background: var(--primary);
-    border-radius: 10px;
-    color: white;
-    font-weight: 700;
-    cursor: pointer;
-    transition: .2s;
-}
-.btn:hover { background: var(--primary-dark); }
-
-/* ===== FLASH ===== */
 .flash {
-    padding: 12px;
+    padding: 12px 16px;
     border-radius: 10px;
     margin-bottom: 12px;
-}
-.flash.success { background: linear-gradient(90deg,#12a454,#0b8f3a); color: #eaffef; }
-.flash.warning { background: linear-gradient(90deg,#ffb94d,#ff9a2c); color: #2a1700; }
-.flash.danger { background: linear-gradient(90deg,#ff6b6b,#ff4b4b); color: #fff; }
-
-/* ===== PILLS DIAS ===== */
-.dias-semana { display: flex; gap: 8px; flex-wrap: wrap; }
-.dias-semana input[type=checkbox] { display:none; }
-.dias-semana label {
-    padding: 8px 12px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    cursor:pointer;
-}
-.dias-semana input:checked + label {
-    background: var(--primary);
-    color:white;
+    font-weight: 600;
+    box-shadow: var(--shadow);
 }
 
-/* ===== TABELAS ===== */
-.table { border-collapse: collapse; margin-top: 12px; }
-.table th {
-    background: var(--primary);
-    color:white;
-    padding: 12px;
+.flash.info {
+    background: linear-gradient(90deg,#4caf50,#3a8f40);
+    color: #eaffef;
 }
-.table td {
-    padding: 12px;
-    background: var(--bg-card);
-    border-top: 1px solid var(--border);
+.flash.success {
+    background: linear-gradient(90deg,#12a454,#0b8f3a);
+    color: #eaffef;
+}
+.flash.warning {
+    background: linear-gradient(90deg,#ffb94d,#ff9a2c);
+    color: #2a1700;
+}
+.flash.danger {
+    background: linear-gradient(90deg,#ff6b6b,#ff4b4b);
+    color: #fff;
 }
