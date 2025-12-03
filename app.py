@@ -391,7 +391,7 @@ def trocar_tema():
     novo = "light" if user.theme == "dark" else "dark"
     user.theme = novo
     db.session.commit()
-    return {"status": "ok", "tema": novo}
+    return {"status": "ok", "theme": novo}
 
 
 

@@ -1,17 +1,11 @@
-/* Perfil page */
+/* perfil.css - estilos da página de perfil */
 .container-perfil{ max-width:1000px; margin:0 auto; padding:18px; }
 .titulo-pagina{ font-size:22px; margin-bottom:12px; color:var(--text); font-weight:800; }
 .form-perfil{ display:grid; grid-template-columns: 1fr 320px; gap:18px; align-items:start; }
-.form-perfil .right{ background: var(--bg-card); padding:16px; border-radius:12px; border:1px solid var(--border); text-align:center; }
-.foto-perfil{ width:150px; height:150px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); box-shadow: 0 10px 30px rgba(53,212,135,0.04); }
+.form-perfil .right{ background: rgba(255,255,255,0.02); padding:16px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); text-align:center; }
+.profile-pic{ width:150px; height:150px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); box-shadow: 0 10px 30px rgba(53,212,135,0.04); display:block; margin:0 auto 12px auto; }
 
 @media (max-width:880px){
   .form-perfil{ grid-template-columns: 1fr; }
   .form-perfil .right{ order:-1; }
 }
-.container-perfil{max-width:1000px;margin:0 auto;padding:18px}
-.titulo-pagina{font-size:22px;margin-bottom:12px;color:var(--text);font-weight:800}
-.form-perfil{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start}
-.form-perfil .right{background:rgba(255,255,255,0.02);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);text-align:center}
-.foto-perfil{width:150px;height:150px;border-radius:50%;object-fit:cover;border:3px solid var(--accent);box-shadow:0 10px 30px rgba(53,212,135,0.04)}
-@media (max-width:880px){.form-perfil{grid-template-columns:1fr}.form-perfil .right{order:-1}}

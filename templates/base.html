@@ -14,7 +14,7 @@
   {% if request.endpoint in ['dashboard', 'perfil', 'configuracoes', 'gerador'] %}
   <aside class="sidebar" id="sidebar" aria-label="Sidebar">
       <div class="logo-area">
-          <div class="logo-icon">🏋️</div>
+          <div class="logo-icon" aria-hidden="true">🏋️</div>
           <div class="logo-text">FitPlanner</div>
       </div>
 
@@ -45,24 +45,25 @@
       </div>
     </div>
   </header>
-  
+
   <main class="main-content {% if request.endpoint not in ['dashboard','perfil','configuracoes','gerador'] %}no-sidebar{% endif %}">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <div class="flash-box" id="flashBox">
+        <div class="flash-box" id="flashBox" role="status" aria-live="polite">
           {% for category, msg in messages %}
             <div class="flash {{ category }}">{{ msg }}</div>
           {% endfor %}
         </div>
         <script>
-          // fade / remove mount
+          // fade / remove mount: mantem acessibilidade (2.6s visível)
           setTimeout(() => {
             const fb = document.getElementById('flashBox');
             if (fb) {
+              fb.style.transition = 'opacity .36s, transform .36s';
               fb.style.opacity = '0';
               fb.style.transform = 'translateY(-6px)';
-              setTimeout(() => fb.remove(), 500);
+              setTimeout(() => { if (fb && fb.parentNode) fb.parentNode.removeChild(fb); }, 600);
             }
           }, 2600);
         </script>
