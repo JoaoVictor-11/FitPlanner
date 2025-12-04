@@ -50,6 +50,7 @@
 html, body { height:100%; }
 body {
   background: linear-gradient(180deg, var(--bg), var(--bg-2));
+  overflow-x: hidden;
   color: var(--text);
   min-height:100vh;
   display:flex;
