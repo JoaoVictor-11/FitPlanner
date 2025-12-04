@@ -59,168 +59,257 @@ def allowed_file(filename):
 
 def build_plan(nivel, objetivo, divisao, dias, peso, altura, idade):
     """
-    Gera uma lista de dicionários representando exercícios.
-    Não salva no DB — só retorna os itens.
-    Cada item: {'dia': dia_idx, 'grupo': ..., 'exercicio': ..., 'series': n, 'repeticoes': n}
+    Gera um plano semanal (lista de dicts) com treinos mais realistas:
+    - Prioriza exercícios compostos,
+    - Distribui volume por grupo conforme divisão (ABC),
+    - Define séries/reps por objetivo e nível,
+    - Adiciona campo 'tipo' (composto/isolamento) e 'progressao' (texto).
+    Saída: lista de itens {'dia': int, 'grupo': str, 'exercicio': str, 'series': int, 'repeticoes': int, 'tipo': str, 'progressao': str}
     """
-    # lista de exercícios (sintética)
+    import math
+
+    # catálogo de exercícios com tipo, equipamento e dificuldade (1-5)
     EXS = [
-        ("Supino reto", "Peito", ["Ombro","Tríceps"], "barra/halteres", 3),
-        ("Supino inclinado", "Peito", ["Ombro","Tríceps"], "barra/halteres", 3),
-        ("Crucifixo", "Peito", [], "halteres", 2),
-        ("Flexão de braço", "Peito", ["Tríceps"], "peso_corpo", 1),
+        # Peito
+        ("Supino reto", "Peito", "composto", "barra/halteres", 4),
+        ("Supino inclinado", "Peito", "composto", "barra/halteres", 4),
+        ("Crucifixo", "Peito", "isolamento", "halteres", 2),
+        ("Flexão de braço", "Peito", "composto", "peso_corpo", 3),
+        ("Fly máquina", "Peito", "isolamento", "máquina", 2),
 
-        ("Puxada alta", "Costas", ["Bíceps"], "máquina", 2),
-        ("Remada curvada", "Costas", ["Bíceps"], "barra/halteres", 3),
-        ("Remada baixa", "Costas", ["Bíceps"], "máquina", 2),
-        ("Barra fixa", "Costas", ["Bíceps"], "peso_corpo", 3),
+        # Costas
+        ("Levantamento terra", "Costas", "composto", "barra", 5),
+        ("Puxada alta", "Costas", "composto", "máquina", 4),
+        ("Remada curvada", "Costas", "composto", "barra/halteres", 4),
+        ("Remada baixa", "Costas", "composto", "máquina", 3),
+        ("Barra fixa", "Costas", "composto", "peso_corpo", 4),
 
-        ("Agachamento livre", "Pernas", ["Glúteo"], "barra", 3),
-        ("Leg press", "Pernas", ["Glúteo"], "máquina", 2),
-        ("Cadeira extensora", "Pernas", [], "máquina", 1),
-        ("Cadeira flexora", "Pernas", [], "máquina", 1),
-        ("Panturilha em pé", "Pernas", [], "máquina", 1),
+        # Pernas
+        ("Agachamento livre", "Pernas", "composto", "barra", 5),
+        ("Leg press", "Pernas", "composto", "máquina", 4),
+        ("Stiff", "Pernas", "composto", "barra", 4),
+        ("Avanço / Afundo", "Pernas", "composto", "halteres", 3),
+        ("Cadeira extensora", "Pernas", "isolamento", "máquina", 2),
+        ("Cadeira flexora", "Pernas", "isolamento", "máquina", 2),
+        ("Panturrilha em pé", "Pernas", "isolamento", "máquina", 2),
 
-        ("Desenvolvimento", "Ombro", ["Tríceps"], "barra/halteres", 3),
-        ("Elevação lateral", "Ombro", [], "halteres", 1),
-        ("Elevação frontal", "Ombro", [], "halteres", 1),
+        # Ombro
+        ("Desenvolvimento militar", "Ombro", "composto", "barra/halteres", 4),
+        ("Elevação lateral", "Ombro", "isolamento", "halteres", 2),
+        ("Elevação frontal", "Ombro", "isolamento", "halteres", 2),
+        ("Remada alta", "Ombro", "composto", "barra", 3),
 
-        ("Rosca direta", "Bíceps", [], "barra", 2),
-        ("Rosca alternada", "Bíceps", [], "halteres", 1),
+        # Braços
+        ("Rosca direta", "Bíceps", "isolamento", "barra", 3),
+        ("Rosca alternada", "Bíceps", "isolamento", "halteres", 2),
+        ("Rosca martelo", "Bíceps", "isolamento", "halteres", 2),
+        ("Tríceps corda", "Tríceps", "isolamento", "polia", 2),
+        ("Paralelas", "Tríceps", "composto", "peso_corpo", 3),
+        ("Tríceps testa", "Tríceps", "isolamento", "barra/halteres", 3),
 
-        ("Tríceps corda", "Tríceps", [], "polia", 1),
-        ("Paralelas", "Tríceps", [], "peso_corpo", 3),
-
-        ("Prancha", "Core", [], "peso_corpo", 1),
-        ("Elevação de pernas", "Core", [], "peso_corpo", 1),
+        # Core / condicionamento
+        ("Prancha", "Core", "isolamento", "peso_corpo", 1),
+        ("Elevação de pernas", "Core", "isolamento", "peso_corpo", 1),
+        ("Farmer's walk (caminhada)", "Core", "composto", "halteres", 2),
     ]
 
+    # montar dicionário por grupo
     grupos = {}
-    for nome, prim, secs, equip, dif in EXS:
-        grupos.setdefault(prim, []).append({"nome": nome, "dif": dif})
+    for nome, prim, tipo, equip, dif in EXS:
+        grupos.setdefault(prim, []).append({"nome": nome, "tipo": tipo, "dif": dif})
 
-    if objetivo == "emagrecimento":
-        series_base = 3
-        reps_base = 15
-    elif objetivo == "forca":
-        series_base = 5
-        reps_base = 5
-    else:
-        series_base = 4
-        reps_base = 10
+    # parâmetros por objetivo
+    objetivo = (objetivo or "hipertrofia").lower()
+    if objetivo == "forca":
+        reps_compound = (3, 6)
+        reps_iso = (4, 8)
+        sets_compound = (4, 6)
+        sets_iso = (2, 4)
+    elif objetivo == "emagrecimento":
+        reps_compound = (8, 15)
+        reps_iso = (12, 20)
+        sets_compound = (3, 4)
+        sets_iso = (2, 3)
+    else:  # hipertrofia / padrão
+        reps_compound = (6, 12)
+        reps_iso = (8, 15)
+        sets_compound = (3, 5)
+        sets_iso = (2, 4)
 
-    mult_nivel = {"iniciante": 0.7, "intermediario": 1.0, "avancado": 1.25}.get(nivel, 1.0)
+    # multiplicadores por nível
+    nivel = (nivel or "iniciante").lower()
+    mult_por_nivel = {"iniciante": 0.8, "intermediario": 1.0, "avancado": 1.2}.get(nivel, 1.0)
 
-    if altura > 0:
-        try:
-            imc = peso / (altura ** 2)
-        except:
-            imc = None
-    else:
+    # ajustar por idade/IMC (reduzir intensidade se necessário)
+    try:
+        imc = peso / (altura ** 2) if altura and altura > 0 else None
+    except:
         imc = None
+    if imc and imc > 32:
+        mult_por_nivel *= 0.9
+    if idade and idade > 55:
+        mult_por_nivel *= 0.9
 
-    if imc and imc > 30:
-        for g in list(grupos.keys()):
-            grupos[g] = [e for e in grupos[g] if e["dif"] <= 2]
-    if idade and idade > 50:
-        mult_nivel *= 0.9
-        reps_base += 2
-
-    DIVISAO_MAP = {
-        "livre": None,
-        "abc": [
-            ["Peito","Tríceps"],
-            ["Costas","Bíceps"],
-            ["Pernas","Ombro"]
-        ],
-        "abcd": [
-            ["Peito"],
-            ["Costas"],
-            ["Pernas"],
-            ["Ombro","Braços"]
-        ],
-        "abcde": [
-            ["Peito"],
-            ["Costas"],
-            ["Pernas"],
-            ["Ombro"],
-            ["Braços"]
-        ],
-        "ppl": [
-            ["Peito","Ombro","Tríceps"],
-            ["Costas","Bíceps"],
-            ["Pernas","Core"]
+    # divisão ABC (forçar padrão ABC se pedido)
+    if divisao == "abc":
+        DIVISAO_MAP = [
+            ["Peito", "Tríceps"],      # A
+            ["Costas", "Bíceps"],      # B
+            ["Pernas", "Ombro"]        # C
         ]
+    else:
+        DIVISAO_MAP = None
+
+    # dias de interesse (índices 0..6)
+    dias_lista = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"]
+    mapa_dias = [dias_lista.index(d) for d in dias] if dias else [0,2,4]  # padrão Seg/Qua/Sex se não informado
+
+    # volume alvo semanal por grupo (séries totais)
+    volume_alvo = {
+        "Peito": (8, 14),
+        "Costas": (8, 14),
+        "Pernas": (10, 16),
+        "Ombro": (6, 12),
+        "Bíceps": (6, 10),
+        "Tríceps": (6, 10),
+        "Core": (4, 8)
     }
 
-    def expand_groups(glist):
-        out = []
-        for g in glist:
-            if g == "Braços":
-                out += ["Bíceps", "Tríceps"]
-            else:
-                out.append(g)
-        return out
-
-    dias_lista = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"]
-    mapa_dias = [dias_lista.index(d) for d in dias] if dias else []
-
-    grupos_disponiveis = [g for g in ["Peito","Costas","Pernas","Ombro","Bíceps","Tríceps","Core"] if g in grupos]
-    used_exercises = set()
+    # utilitários
+    used = set()
     plan = []
 
-    # quantidade de exercícios por dia base
-    num_dias = len(mapa_dias) or 1
-    if num_dias <= 2:
-        ex_por_dia_base = 6
-    elif num_dias == 3:
-        ex_por_dia_base = 5
-    elif num_dias == 4:
-        ex_por_dia_base = 4
+    def rand_range(r):
+        return random.randint(r[0], r[1])
+
+    def choose_exercises_for_group(group, needed_series, prefer_compound_first=True):
+        """Retorna lista de exercícios para o grupo com contagem de séries por exercício."""
+        pool = grupos.get(group, [])[:]
+        if not pool:
+            return []
+        # priorizar compostos
+        compounds = [e for e in pool if e["tipo"] == "composto" and e["nome"] not in used]
+        isolations = [e for e in pool if e["tipo"] == "isolamento" and e["nome"] not in used]
+        chosen = []
+        remaining = needed_series
+        # tentar alocar compostos primeiro (cada composto pega 3-5 séries dependendo do objetivo)
+        for e in compounds:
+            if remaining <= 0:
+                break
+            # decide séries para esse exercício
+            s = rand_range(sets_compound)
+            s = max(1, int(math.ceil(s * mult_por_nivel)))
+            chosen.append({"nome": e["nome"], "tipo": "composto", "series": s})
+            remaining -= s
+        # preencher com isolations
+        for e in isolations:
+            if remaining <= 0:
+                break
+            s = rand_range(sets_iso)
+            s = max(1, int(math.ceil(s * mult_por_nivel)))
+            chosen.append({"nome": e["nome"], "tipo": "isolamento", "series": s})
+            remaining -= s
+        # se ainda resta volume, pegar exercícios mesmo repetidos (ou já usados), mas respeitar variedade
+        if remaining > 0:
+            fallback = [e for e in pool if e["nome"] not in [c["nome"] for c in chosen]]
+            i = 0
+            while remaining > 0 and (i < len(fallback)):
+                e = fallback[i]
+                s = 1
+                chosen.append({"nome": e["nome"], "tipo": e["tipo"], "series": s})
+                remaining -= s
+                i += 1
+        return chosen
+
+    # função que formata objetivo de reps por tipo de exercício
+    def reps_for(tipo):
+        if tipo == "composto":
+            r = rand_range(reps_compound)
+        else:
+            r = rand_range(reps_iso)
+        # ajustar por nível: iniciantes usam o lado superior do range para aprender técnica
+        if nivel == "iniciante":
+            r = int(min(r * 1.1, reps_compound[1] if tipo=="composto" else reps_iso[1]))
+        # garantir ao menos 3 reps e no máximo 20
+        return max(3, min(20, int(r)))
+
+    # mapear dias para padrões (se DIVISAO_MAP definido, replicar o padrão ABC na sequência dos dias escolhidos)
+    if DIVISAO_MAP:
+        pattern = DIVISAO_MAP
+        pattern_len = len(pattern)
+        # se houver mais dias que pattern_len, ciclo pelo padrão
+        day_patterns = []
+        for i, dia in enumerate(mapa_dias):
+            day_patterns.append(pattern[i % pattern_len])
     else:
-        ex_por_dia_base = 3
+        # fallback: para cada dia pega 2 grupos balanceados
+        all_groups = [g for g in ["Peito","Costas","Pernas","Ombro","Bíceps","Tríceps","Core"] if g in grupos]
+        day_patterns = []
+        for i in range(len(mapa_dias)):
+            g1 = all_groups[i % len(all_groups)]
+            g2 = all_groups[(i+1) % len(all_groups)]
+            day_patterns.append([g1, g2])
 
-    def selecionar_exercicios(lista, n, prefer_dif_max=3):
-        candidatos = [e for e in lista if e["nome"] not in used_exercises and e["dif"] <= prefer_dif_max]
-        if len(candidatos) < n:
-            candidatos = [e for e in lista if e["nome"] not in used_exercises]
-        if len(candidatos) < n:
-            candidatos = lista[:]
-        selecionados = random.sample(candidatos, k=min(n, len(candidatos)))
-        return selecionados
+    # calcular aparições por grupo na semana
+    aparicoes = {}
+    for pattern in day_patterns:
+        for g in pattern:
+            aparicoes[g] = aparicoes.get(g, 0) + 1
 
-    def processar_dia(dia_id, grupos_para_dia):
-        nonlocal plan
-        grupos_para_dia = expand_groups(grupos_para_dia)
-        per_group = max(1, ex_por_dia_base // max(1, len(grupos_para_dia)))
-        extras = ex_por_dia_base - per_group * len(grupos_para_dia)
-        for gi, g in enumerate(grupos_para_dia):
-            cnt = per_group + (1 if gi < extras else 0)
-            lista = grupos.get(g, [])
-            if not lista:
+    # decidir séries por aparição (distribuir o volume alvo pela aparição)
+    series_por_aparicao = {}
+    for g, freq in aparicoes.items():
+        alvo = volume_alvo.get(g, (6, 10))
+        alvo_media = int(round((alvo[0] + alvo[1]) / 2.0))
+        per_day = max(2, int(round((alvo_media / max(1, freq)) * mult_por_nivel)))
+        series_por_aparicao[g] = per_day
+
+    # montar plano dia a dia
+    for dia_idx, grupos_para_dia in zip(mapa_dias, day_patterns):
+        # expandir "Braços" caso exista (compatibilidade)
+        expanded = []
+        for g in grupos_para_dia:
+            if g == "Braços":
+                expanded += ["Bíceps", "Tríceps"]
+            else:
+                expanded.append(g)
+        # para cada grupo escolher exercícios
+        for g in expanded:
+            needed_series = series_por_aparicao.get(g, 3)
+            ex_list = choose_exercises_for_group(g, needed_series)
+            if not ex_list:
                 continue
-            selecionados = selecionar_exercicios(lista, cnt, prefer_dif_max=3 if nivel=="avancado" else (2 if nivel=="intermediario" else 1))
-            for ex in selecionados:
-                series = max(1, int(series_base * mult_nivel))
-                reps = max(4, int(reps_base * mult_nivel))
+            # ordenar por tipo: compostos primeiro
+            ex_list = sorted(ex_list, key=lambda x: 0 if x["tipo"]=="composto" else 1)
+            for ex in ex_list:
+                # evitar repetir o mesmo exercício na mesma semana
+                if ex["nome"] in used:
+                    continue
+                used.add(ex["nome"])
+                tipo = ex["tipo"]
+                series = ex["series"]
+                repeticoes = reps_for(tipo)
+                # criar sugestão de progressão
+                if objetivo == "forca":
+                    progressao = f"Foco força: {series}x{repeticoes}. Tente aumentar 1 carga a cada 1-2 semanas mantendo reps no range {repeticoes}."
+                elif objetivo == "emagrecimento":
+                    progressao = f"Foco condicionamento: {series}x{repeticoes}. Minimize descansos (~30-60s). Aumente reps ou adicione circuito."
+                else:
+                    upper = min(reps_compound[1], 15) if tipo=="composto" else min(reps_iso[1], 20)
+                    progressao = f"Hipertrofia: {series}x{repeticoes}. Aumente 1 rep por semana até {upper}, depois aumente carga e volte ao lower range."
+
                 plan.append({
-                    "dia": dia_id,
+                    "dia": int(dia_idx),
                     "grupo": g,
                     "exercicio": ex["nome"],
-                    "series": series,
-                    "repeticoes": reps
+                    "series": int(series),
+                    "repeticoes": int(repeticoes),
+                    "tipo": tipo,
+                    "progressao": progressao
                 })
-                used_exercises.add(ex["nome"])
 
-    if divisao == "livre" or DIVISAO_MAP.get(divisao) is None:
-        for i, dia in enumerate(mapa_dias if mapa_dias else [0]):
-            grupo = grupos_disponiveis[i % len(grupos_disponiveis)]
-            processar_dia(dia, [grupo])
-    else:
-        pattern = DIVISAO_MAP.get(divisao, DIVISAO_MAP["livre"])
-        for idx_d, dia in enumerate(mapa_dias):
-            padrao_dia = pattern[idx_d % len(pattern)]
-            processar_dia(dia, padrao_dia)
+    # ordenar por dia e priorizar compostos
+    plan = sorted(plan, key=lambda x: (x["dia"], 0 if x.get("tipo")=="composto" else 1))
 
     return plan
 
