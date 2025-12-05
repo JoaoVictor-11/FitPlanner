@@ -1,8 +1,8 @@
-# 🧠 Projeto de Extensão - 2025.2
+#  Projeto de Extensão - 2025.2
 
 ## 🏋️‍♂️ **FitPlanner – Gerador de Treinos Personalizados**
 
-### 📝 **Introdução**
+###  **Introdução**
 O **FitPlanner** é um projeto de extensão desenvolvido com o objetivo de **facilitar a criação de treinos personalizados de academia**, de forma automatizada e acessível.
 
 O sistema permite que o usuário cadastre seu perfil físico (idade, peso, altura, objetivo, nível e dias de treino disponíveis) e, com base nessas informações, **gera automaticamente um plano de treino adaptado** ao seu perfil e objetivo.
@@ -13,7 +13,7 @@ Ao final, os participantes terão construído um **site funcional e responsivo**
 
 ---
 
-### 📚 **Documentação**
+###  **Documentação**
 Aqui estão reunidos todos os registros e documentos produzidos durante o desenvolvimento do projeto, como **pautas de reuniões, relatórios de progresso e protótipos das telas**.
 
 **Links para os documentos:**
@@ -21,7 +21,7 @@ Aqui estão reunidos todos os registros e documentos produzidos durante o desenv
 
 ---
 
-### 💻 **Linguagens Utilizadas**
+###  **Linguagens Utilizadas**
 - **HTML:** Estrutura das páginas e formulários do site.
 - **CSS:** Estilização e design responsivo da interface.
 - **JavaScript:** Interatividade e manipulação de elementos no front-end.
@@ -30,7 +30,7 @@ Aqui estão reunidos todos os registros e documentos produzidos durante o desenv
 
 ---
 
-### 🧰 **Ferramentas Utilizadas**
+### **Ferramentas Utilizadas**
 - **VS Code:** Editor de código principal para desenvolvimento.
 - **GitHub:** Controle de versão e repositório do projeto.
 - **Trello:** Organização das tarefas e acompanhamento do cronograma.
@@ -38,9 +38,9 @@ Aqui estão reunidos todos os registros e documentos produzidos durante o desenv
 
 ---
 
-### ⚙️ **Instalação**
+###  **Instalação**
 
-#### 🌐 **Versão Web**
+####  **Versão Web**
 1. Faça o **clone** do repositório no GitHub.
 2. Crie e ative um **ambiente virtual Python** (opcional, mas recomendado):
    ```bash
@@ -63,7 +63,7 @@ Aqui estão reunidos todos os registros e documentos produzidos durante o desenv
 
 ---
 
-### 📋 **Funcionalidades Principais**
+###  **Funcionalidades Principais**
 - Cadastro e login de usuários.
 - Formulário de perfil (objetivo, nível, dias de treino, idade, peso, altura).
 - Geração automática de plano de treino baseado no perfil.
@@ -72,7 +72,7 @@ Aqui estão reunidos todos os registros e documentos produzidos durante o desenv
 
 ---
 
-### 🚀 **Funcionalidades Futuras**
+###  **Funcionalidades Futuras**
 - Geração de planos nutricionais básicos.
 - Gráficos de progresso físico.
 - Exportação do treino em PDF.
@@ -80,7 +80,7 @@ Aqui estão reunidos todos os registros e documentos produzidos durante o desenv
 
 ---
 
-### 👥 **Equipe**
+###  **Equipe**
 **Aluno 1:** João Victor Andrade Nascimento Ramalho  
 **Aluno 2:** Caio Graciano Nóbrega  
 **Aluno 3:** Thalles Rennê Maciel e Silva
