@@ -41,7 +41,9 @@
   <h3>Últimos treinos</h3>
   {% if treinos %}
     <table class="table">
-      <thead><tr><th>Dia</th><th>Exercício</th><th>Séries</th><th>Reps</th></tr></thead>
+      <thead>
+        <tr><th>Dia</th><th>Exercício</th><th>Séries</th><th>Reps</th></tr>
+      </thead>
       <tbody>
         {% for t in treinos %}
         <tr>
@@ -58,7 +60,6 @@
   {% endif %}
 </section>
 
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 async function loadProgress() {
@@ -70,9 +71,18 @@ async function loadProgress() {
       type: 'bar',
       data: {
         labels: json.labels,
-        datasets: [{ label: 'Exercícios', data: json.data, backgroundColor: 'rgba(53,212,135,0.9)', borderRadius: 6 }]
+        datasets: [{
+          label: 'Exercícios',
+          data: json.data,
+          backgroundColor: 'rgba(53,212,135,0.9)',
+          borderRadius: 6
+        }]
       },
-      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+      options: {
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{legend:{display:false}}
+      }
     });
   } catch(e) {
     console.error(e);
